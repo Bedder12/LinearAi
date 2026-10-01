@@ -1,5 +1,7 @@
 package com.example.myapplication.ink
 
+import androidx.ink.strokes.Stroke
+
 data class InkDocument (
-    val strokes: MutableList<InkStroke> = mutableListOf()
+    val strokes: List<Stroke> = emptyList()
 )

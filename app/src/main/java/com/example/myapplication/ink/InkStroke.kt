@@ -1,7 +1,5 @@
 package com.example.myapplication.ink
 
-
-
 data class InkStroke (
     val points: MutableList<InkPoint> = mutableListOf(),
     val tool: InkTool = InkTool.PEN,
