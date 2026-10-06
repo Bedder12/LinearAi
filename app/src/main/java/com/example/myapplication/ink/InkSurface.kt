@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.ink.authoring.compose.InProgressStrokes
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 
@@ -26,22 +28,41 @@ fun InkSurface(
     }
 
     Box(
-        modifier = modifier
-    ) {
+        modifier = modifier.pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent(
+                        PointerEventPass.Initial
+                    )
 
-        Canvas(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            document.strokes.forEach { stroke ->
-                renderer.draw(
-                    canvas = drawContext.canvas.nativeCanvas,
-                    stroke = stroke,
-                    strokeToScreenTransform = identityMatrix
-                )
+                    event.changes.forEach { change ->
+                        val decision =
+                            InkInputPolicy.classify(change.type)
+
+                        if (decision == InkInputChecker.IGNORE) {
+                            change.consume()
+                        }
+                    }
+                }
             }
         }
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
 
-        Box(modifier = Modifier.fillMaxSize()) {
+            Canvas(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                document.strokes.forEach { stroke ->
+                    renderer.draw(
+                        canvas = drawContext.canvas.nativeCanvas,
+                        stroke = stroke,
+                        strokeToScreenTransform = identityMatrix
+                    )
+                }
+            }
+
             InProgressStrokes(
                 defaultBrush = InkBrushes.defaultPen,
                 onStrokesFinished = { finishedStrokes ->
