@@ -74,6 +74,7 @@ fun InkSurface(
                     onDocumentChange(updatedDocument)
                 }
             )
+
         }
     }
 }
