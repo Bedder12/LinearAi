@@ -16,9 +16,11 @@ import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 @Composable
 fun InkSurface(
     document: InkDocument,
+    selectedTool: InkTool,
     onDocumentChange: (InkDocument) -> Unit,
     modifier: Modifier = Modifier
 ) {
+
     val renderer = remember {
         CanvasStrokeRenderer.create()
     }
@@ -29,13 +31,17 @@ fun InkSurface(
 
     Box(
         modifier = modifier.pointerInput(Unit) {
+
             awaitPointerEventScope {
+
                 while (true) {
+
                     val event = awaitPointerEvent(
                         PointerEventPass.Initial
                     )
 
                     event.changes.forEach { change ->
+
                         val decision =
                             InkInputPolicy.classify(change.type)
 
@@ -47,6 +53,7 @@ fun InkSurface(
             }
         }
     ) {
+
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -54,7 +61,9 @@ fun InkSurface(
             Canvas(
                 modifier = Modifier.fillMaxSize()
             ) {
+
                 document.strokes.forEach { stroke ->
+
                     renderer.draw(
                         canvas = drawContext.canvas.nativeCanvas,
                         stroke = stroke,
@@ -63,18 +72,20 @@ fun InkSurface(
                 }
             }
 
-            InProgressStrokes(
-                defaultBrush = InkBrushes.defaultPen,
-                onStrokesFinished = { finishedStrokes ->
+            if (selectedTool == InkTool.PEN) {
 
-                    val updatedDocument = document.copy(
-                        strokes = document.strokes + finishedStrokes
-                    )
+                InProgressStrokes(
+                    defaultBrush = InkBrushes.defaultPen,
+                    onStrokesFinished = { finishedStrokes ->
 
-                    onDocumentChange(updatedDocument)
-                }
-            )
+                        val updatedDocument = document.copy(
+                            strokes = document.strokes + finishedStrokes
+                        )
 
+                        onDocumentChange(updatedDocument)
+                    }
+                )
+            }
         }
     }
 }
