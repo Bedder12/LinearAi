@@ -11,15 +11,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.example.myapplication.ink.InkDocument
 import com.example.myapplication.ink.InkSurface
 import com.example.myapplication.ink.InkTool
+import com.example.myapplication.ink.StudentWork
 
 @Composable
 fun MathWorkspaceScreen() {
 
-    var document by remember {
-        mutableStateOf(InkDocument())
+    var studentWork by remember {
+        mutableStateOf(StudentWork())
     }
 
     var selectedTool by remember {
@@ -50,18 +50,20 @@ fun MathWorkspaceScreen() {
 
             Button(
                 onClick = {
-                    document = document.clear()
+                    studentWork = studentWork.clear()
                 }
             ) {
                 Text("Clear")
             }
         }
 
+        Text("Revision: ${studentWork.revision}")
+
         InkSurface(
-            document = document,
+            document = studentWork.document,
             selectedTool = selectedTool,
             onDocumentChange = { updatedDocument ->
-                document = updatedDocument
+                studentWork = studentWork.updateDocument(updatedDocument)
             },
             modifier = Modifier.weight(1f)
         )

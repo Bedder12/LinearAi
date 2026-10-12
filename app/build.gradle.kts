@@ -33,6 +33,18 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions{
+        managedDevices{
+            localDevices{
+                create("pixelApi35"){
+                    device = "Pixel 5"
+                    apiLevel = 35
+                    systemImageSource = "aosp"
+                }
+            }
+        }
+    }
 }
 
 dependencies {
