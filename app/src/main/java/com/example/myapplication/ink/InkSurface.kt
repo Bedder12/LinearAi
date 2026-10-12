@@ -5,7 +5,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -20,6 +22,8 @@ fun InkSurface(
     onDocumentChange: (InkDocument) -> Unit,
     modifier: Modifier = Modifier
 ) {
+
+    val currentDocument by rememberUpdatedState(document)
 
     val renderer = remember {
         CanvasStrokeRenderer.create()
@@ -54,14 +58,14 @@ fun InkSurface(
                         } else if(selectedTool == InkTool.ERASER && change.pressed) {
 
                             val hits = hitTester.findHits(
-                                strokes = document.strokes,
+                                strokes = currentDocument.strokes,
                                 x = change.position.x,
                                 y = change.position.y,
                                 radius = 20f
                             )
                             if (hits.isNotEmpty()) {
                                 val updatedDocument =
-                                    document.removeStrokes(hits)
+                                    currentDocument.removeStrokes(hits)
                                 onDocumentChange(updatedDocument)
                             }
                             change.consume()
@@ -96,7 +100,7 @@ fun InkSurface(
                     defaultBrush = InkBrushes.defaultPen,
                     onStrokesFinished = { finishedStrokes ->
 
-                        val updatedDocument = document.copy(
+                        val updatedDocument = currentDocument.copy(
                             strokes = document.strokes + finishedStrokes
                         )
 
