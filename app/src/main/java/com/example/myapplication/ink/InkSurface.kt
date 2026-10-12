@@ -29,8 +29,12 @@ fun InkSurface(
         Matrix()
     }
 
+    val hitTester = remember {
+        StrokeHitTester()
+    }
+
     Box(
-        modifier = modifier.pointerInput(Unit) {
+        modifier = modifier.pointerInput(selectedTool) {
 
             awaitPointerEventScope {
 
@@ -46,6 +50,20 @@ fun InkSurface(
                             InkInputPolicy.classify(change.type)
 
                         if (decision == InkInputChecker.IGNORE) {
+                            change.consume()
+                        } else if(selectedTool == InkTool.ERASER && change.pressed) {
+
+                            val hits = hitTester.findHits(
+                                strokes = document.strokes,
+                                x = change.position.x,
+                                y = change.position.y,
+                                radius = 20f
+                            )
+                            if (hits.isNotEmpty()) {
+                                val updatedDocument =
+                                    document.removeStrokes(hits)
+                                onDocumentChange(updatedDocument)
+                            }
                             change.consume()
                         }
                     }

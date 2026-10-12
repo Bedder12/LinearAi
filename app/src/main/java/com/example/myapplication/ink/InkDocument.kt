@@ -8,4 +8,13 @@ data class InkDocument (
     fun clear(): InkDocument {
         return copy(strokes = emptyList())
     }
+
+    // Filter what's targeted to be removed from what should stay
+    fun removeStrokes(strokesToRemove: Set<Stroke>): InkDocument {
+        return copy(
+            strokes = strokes.filterNot { stroke ->
+                stroke in strokesToRemove
+            }
+        )
+    }
 }
