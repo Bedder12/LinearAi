@@ -4,16 +4,15 @@ import androidx.ink.geometry.AffineTransform
 import androidx.ink.geometry.ImmutableBox
 import androidx.ink.geometry.ImmutableVec
 import androidx.ink.geometry.Intersection.intersects
-import androidx.ink.strokes.Stroke
 
 class StrokeHitTester {
 
     fun findHits(
-        strokes: List<Stroke>,
+        strokes: List<TrackedStroke>,
         x: Float,
         y: Float,
         radius: Float
-    ): Set<Stroke>{
+    ): Set<TrackedStroke>{
 
         val center = ImmutableVec(x,y)
 
@@ -26,11 +25,12 @@ class StrokeHitTester {
         val identityTransform = AffineTransform.IDENTITY
 
         return strokes
-            .filter { stroke ->
-                stroke.shape.intersects(
+            .filter { trackedStroke ->
+                trackedStroke.stroke.shape.intersects(
                     box = eraserRegion,
                     meshToBox = identityTransform
-            )
-        }.toSet()
+                )
+            }
+            .toSet()
     }
 }

@@ -1,15 +1,13 @@
 package com.example.myapplication.ink
 
-import androidx.ink.strokes.Stroke
-
 sealed interface InkChange {
 
     data class StrokeAdded(
-        val stroke: Stroke
+        val stroke: TrackedStroke
     ) : InkChange
 
     data class StrokeRemoved(
-        val stroke: Stroke
+        val strokeId: String
     ) : InkChange
 
     data object DocumentCleared : InkChange

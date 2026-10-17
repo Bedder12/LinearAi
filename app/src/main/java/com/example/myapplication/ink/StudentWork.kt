@@ -14,23 +14,31 @@ data class StudentWork(
 
         val nextRevision = revision + 1
 
+        val trackedStrokes = newStrokes.map { stroke ->
+            TrackedStroke(
+                stroke = stroke
+            )
+        }
+
         return copy(
             document = document.copy(
-                strokes = document.strokes + newStrokes
+                strokes = document.strokes + trackedStrokes
             ),
             revision = nextRevision,
             pendingChanges = pendingChanges +
-                    newStrokes.map { stroke ->
+                    trackedStrokes.map { trackedStroke ->
                         PendingInkChange(
                             revision = nextRevision,
-                            change = InkChange.StrokeAdded(stroke)
+                            change = InkChange.StrokeAdded(
+                                stroke = trackedStroke
+                            )
                         )
                     }
         )
     }
 
     fun removeStrokes(
-        strokesToRemove: Set<Stroke>
+        strokesToRemove: Set<TrackedStroke>
     ): StudentWork {
 
         val nextRevision = revision + 1
@@ -39,10 +47,12 @@ data class StudentWork(
             document = document.removeStrokes(strokesToRemove),
             revision = nextRevision,
             pendingChanges = pendingChanges +
-                    strokesToRemove.map { stroke ->
+                    strokesToRemove.map { trackedStroke ->
                         PendingInkChange(
                             revision = nextRevision,
-                            change = InkChange.StrokeRemoved(stroke)
+                            change = InkChange.StrokeRemoved(
+                                strokeId = trackedStroke.id
+                            )
                         )
                     }
         )
@@ -62,6 +72,7 @@ data class StudentWork(
                     )
         )
     }
+
     fun markChangesSynced(
         acceptedRevision: Long
     ): StudentWork {

@@ -1,0 +1,7 @@
+package com.example.myapplication.analysis.transport
+
+data class StrokePointPayload(
+    val x: Float,
+    val y: Float,
+    val elapsedTimeMillis: Long
+)

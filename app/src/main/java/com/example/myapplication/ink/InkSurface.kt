@@ -21,7 +21,7 @@ fun InkSurface(
     document: InkDocument,
     selectedTool: InkTool,
     onStrokesAdded: (Collection<Stroke>) -> Unit,
-    onStrokesRemoved: (Set<Stroke>) -> Unit,
+    onStrokesRemoved: (Set<TrackedStroke>) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -91,11 +91,10 @@ fun InkSurface(
                 modifier = Modifier.fillMaxSize()
             ) {
 
-                document.strokes.forEach { stroke ->
-
+                document.strokes.forEach { trackedStroke ->
                     renderer.draw(
                         canvas = drawContext.canvas.nativeCanvas,
-                        stroke = stroke,
+                        stroke = trackedStroke.stroke,
                         strokeToScreenTransform = identityMatrix
                     )
                 }
