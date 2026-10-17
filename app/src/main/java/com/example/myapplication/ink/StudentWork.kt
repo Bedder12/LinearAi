@@ -5,20 +5,26 @@ import androidx.ink.strokes.Stroke
 data class StudentWork(
     val document: InkDocument = InkDocument(),
     val revision: Long = 0L,
-    val pendingChange: List<InkChange> = emptyList()
+    val pendingChanges: List<PendingInkChange> = emptyList()
 ) {
 
     fun addStrokes(
         newStrokes: Collection<Stroke>
     ): StudentWork {
+
+        val nextRevision = revision + 1
+
         return copy(
             document = document.copy(
                 strokes = document.strokes + newStrokes
             ),
-            revision = revision + 1,
-            pendingChange = pendingChange +
+            revision = nextRevision,
+            pendingChanges = pendingChanges +
                     newStrokes.map { stroke ->
-                        InkChange.StrokeAdded(stroke)
+                        PendingInkChange(
+                            revision = nextRevision,
+                            change = InkChange.StrokeAdded(stroke)
+                        )
                     }
         )
     }
@@ -26,22 +32,43 @@ data class StudentWork(
     fun removeStrokes(
         strokesToRemove: Set<Stroke>
     ): StudentWork {
+
+        val nextRevision = revision + 1
+
         return copy(
             document = document.removeStrokes(strokesToRemove),
-            revision = revision + 1,
-            pendingChange = pendingChange +
+            revision = nextRevision,
+            pendingChanges = pendingChanges +
                     strokesToRemove.map { stroke ->
-                        InkChange.StrokeRemoved(stroke)
+                        PendingInkChange(
+                            revision = nextRevision,
+                            change = InkChange.StrokeRemoved(stroke)
+                        )
                     }
         )
     }
 
     fun clear(): StudentWork {
+
+        val nextRevision = revision + 1
+
         return copy(
             document = document.clear(),
-            revision = revision + 1,
-            pendingChange =
-                pendingChange + InkChange.DocumentCleared
+            revision = nextRevision,
+            pendingChanges = pendingChanges +
+                    PendingInkChange(
+                        revision = nextRevision,
+                        change = InkChange.DocumentCleared
+                    )
+        )
+    }
+    fun markChangesSynced(
+        acceptedRevision: Long
+    ): StudentWork {
+        return copy(
+            pendingChanges = pendingChanges.filter { pending ->
+                pending.revision > acceptedRevision
+            }
         )
     }
 }
