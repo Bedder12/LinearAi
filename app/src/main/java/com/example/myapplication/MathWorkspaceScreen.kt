@@ -62,9 +62,15 @@ fun MathWorkspaceScreen() {
         InkSurface(
             document = studentWork.document,
             selectedTool = selectedTool,
-            onDocumentChange = { updatedDocument ->
-                studentWork = studentWork.updateDocument(updatedDocument)
+
+            onStrokesAdded = { newStrokes ->
+                studentWork = studentWork.addStrokes(newStrokes)
             },
+
+            onStrokesRemoved = { strokesToRemove ->
+                studentWork = studentWork.removeStrokes(strokesToRemove)
+            },
+
             modifier = Modifier.weight(1f)
         )
     }

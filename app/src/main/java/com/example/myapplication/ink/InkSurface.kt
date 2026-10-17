@@ -14,12 +14,14 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.ink.authoring.compose.InProgressStrokes
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
+import androidx.ink.strokes.Stroke
 
 @Composable
 fun InkSurface(
     document: InkDocument,
     selectedTool: InkTool,
-    onDocumentChange: (InkDocument) -> Unit,
+    onStrokesAdded: (Collection<Stroke>) -> Unit,
+    onStrokesRemoved: (Set<Stroke>) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -54,8 +56,13 @@ fun InkSurface(
                             InkInputPolicy.classify(change.type)
 
                         if (decision == InkInputChecker.IGNORE) {
+
                             change.consume()
-                        } else if(selectedTool == InkTool.ERASER && change.pressed) {
+
+                        } else if (
+                            selectedTool == InkTool.ERASER &&
+                            change.pressed
+                        ) {
 
                             val hits = hitTester.findHits(
                                 strokes = currentDocument.strokes,
@@ -63,11 +70,11 @@ fun InkSurface(
                                 y = change.position.y,
                                 radius = 20f
                             )
+
                             if (hits.isNotEmpty()) {
-                                val updatedDocument =
-                                    currentDocument.removeStrokes(hits)
-                                onDocumentChange(updatedDocument)
+                                onStrokesRemoved(hits)
                             }
+
                             change.consume()
                         }
                     }
@@ -99,12 +106,7 @@ fun InkSurface(
                 InProgressStrokes(
                     defaultBrush = InkBrushes.defaultPen,
                     onStrokesFinished = { finishedStrokes ->
-
-                        val updatedDocument = currentDocument.copy(
-                            strokes = document.strokes + finishedStrokes
-                        )
-
-                        onDocumentChange(updatedDocument)
+                        onStrokesAdded(finishedStrokes)
                     }
                 )
             }
