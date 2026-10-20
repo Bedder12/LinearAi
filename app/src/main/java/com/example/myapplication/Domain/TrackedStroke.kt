@@ -1,4 +1,4 @@
-package com.example.myapplication.ink
+package com.example.myapplication.Domain
 
 import androidx.ink.strokes.Stroke
 import java.util.UUID

@@ -1,4 +1,4 @@
-package com.example.myapplication.analysis.transport
+package com.example.myapplication.analysis.DTOs
 
 data class StrokePointPayload(
     val x: Float,

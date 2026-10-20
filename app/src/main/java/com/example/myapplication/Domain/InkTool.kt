@@ -1,4 +1,4 @@
-package com.example.myapplication.ink
+package com.example.myapplication.Domain
 
 enum class InkTool {
     PEN,

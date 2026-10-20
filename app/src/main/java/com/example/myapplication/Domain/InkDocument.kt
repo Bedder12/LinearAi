@@ -1,4 +1,4 @@
-package com.example.myapplication.ink
+package com.example.myapplication.Domain
 
 data class InkDocument(
     val strokes: List<TrackedStroke> = emptyList()

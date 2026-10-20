@@ -1,9 +1,8 @@
-package com.example.myapplication.ink
+package com.example.myapplication.Domain
 
 import android.graphics.Bitmap
 
 class InkBitmapRenderer {
-
 
     fun render(
         document: InkDocument,
@@ -16,5 +15,7 @@ class InkBitmapRenderer {
             height,
             Bitmap.Config.ARGB_8888
         )
+
+        return bitmap
     }
 }
