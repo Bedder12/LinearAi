@@ -10,15 +10,15 @@ fun TrackedStroke.toPayload(): StrokePayload {
         val input = inputs[index]
 
         StrokePointPayload(
-            x = input.position.x,
-            y = input.position.y,
+            x = input.x,
+            y = input.y,
             elapsedTimeMillis = input.elapsedTimeMillis
         )
     }
 
     return StrokePayload(
         id = id,
-        toolType = inputs.toolType.toString(),
+        toolType = inputs.getToolType().toString(),
         points = points
     )
 }
