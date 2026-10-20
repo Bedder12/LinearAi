@@ -1,6 +1,6 @@
 package com.example.myapplication.analysis
 
-import com.example.myapplication.Domain.StudentWork
+import com.example.myapplication.domain.StudentWork
 
 fun StudentWork.toAnalysisRequest(): AnalysisRequest {
     return AnalysisRequest(

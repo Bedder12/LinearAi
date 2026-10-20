@@ -1,6 +1,6 @@
 package com.example.myapplication.analysis.DTOs
 
-import com.example.myapplication.Domain.TrackedStroke
+import com.example.myapplication.domain.TrackedStroke
 
 fun TrackedStroke.toPayload(): StrokePayload {
 

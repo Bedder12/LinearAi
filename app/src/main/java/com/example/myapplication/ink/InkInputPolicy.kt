@@ -1,4 +1,4 @@
-package com.example.myapplication.Domain
+package com.example.myapplication.ink
 
 import androidx.compose.ui.input.pointer.PointerType
 

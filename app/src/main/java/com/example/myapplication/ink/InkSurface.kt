@@ -1,4 +1,4 @@
-package com.example.myapplication.Domain
+package com.example.myapplication.ink
 
 import android.graphics.Matrix
 import androidx.compose.foundation.Canvas
@@ -15,6 +15,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.ink.authoring.compose.InProgressStrokes
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import androidx.ink.strokes.Stroke
+import com.example.myapplication.domain.InkDocument
+import com.example.myapplication.domain.TrackedStroke
 
 @Composable
 fun InkSurface(

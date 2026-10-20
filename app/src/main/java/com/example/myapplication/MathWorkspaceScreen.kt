@@ -11,9 +11,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.example.myapplication.Domain.InkSurface
-import com.example.myapplication.Domain.InkTool
-import com.example.myapplication.Domain.StudentWork
+import com.example.myapplication.ink.InkSurface
+import com.example.myapplication.ink.InkTool
+import com.example.myapplication.domain.StudentWork
 
 @Composable
 fun MathWorkspaceScreen() {

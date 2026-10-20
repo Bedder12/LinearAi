@@ -1,9 +1,10 @@
-package com.example.myapplication.Domain
+package com.example.myapplication.ink
 
 import androidx.ink.geometry.AffineTransform
 import androidx.ink.geometry.ImmutableBox
 import androidx.ink.geometry.ImmutableVec
 import androidx.ink.geometry.Intersection.intersects
+import com.example.myapplication.domain.TrackedStroke
 
 class StrokeHitTester {
 
@@ -14,7 +15,7 @@ class StrokeHitTester {
         radius: Float
     ): Set<TrackedStroke>{
 
-        val center = ImmutableVec(x,y)
+        val center = ImmutableVec(x, y)
 
         val eraserRegion = ImmutableBox.fromCenterAndDimensions(
             center = center,

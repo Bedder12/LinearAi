@@ -1,4 +1,4 @@
-package com.example.myapplication.Domain
+package com.example.myapplication.domain
 
 import android.graphics.Bitmap
 

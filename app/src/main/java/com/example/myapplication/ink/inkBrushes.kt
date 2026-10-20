@@ -1,4 +1,4 @@
-package com.example.myapplication.Domain
+package com.example.myapplication.ink
 
 import androidx.ink.brush.Brush
 import androidx.ink.brush.StockBrushes

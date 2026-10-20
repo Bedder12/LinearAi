@@ -1,6 +1,6 @@
 package com.example.myapplication.analysis
 
-import com.example.myapplication.Domain.PendingInkChange
+import com.example.myapplication.domain.PendingInkChange
 
 data class AnalysisRequest(
     val revision: Long,
