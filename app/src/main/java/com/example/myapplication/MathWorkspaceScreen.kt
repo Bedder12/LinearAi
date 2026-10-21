@@ -11,10 +11,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.example.myapplication.domain.StudentWork
 import com.example.myapplication.ink.InkSurface
 import com.example.myapplication.ink.InkTool
-import com.example.myapplication.domain.StudentWork
-
 @Composable
 fun MathWorkspaceScreen() {
 
@@ -70,7 +69,6 @@ fun MathWorkspaceScreen() {
             onStrokesRemoved = { strokesToRemove ->
                 studentWork = studentWork.removeStrokes(strokesToRemove)
             },
-
             modifier = Modifier.weight(1f)
         )
     }
