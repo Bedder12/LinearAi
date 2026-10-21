@@ -67,4 +67,62 @@ class StudentWorkInstrumentedTest {
             addedChange.stroke.id
         )
     }
+
+    @Test
+    fun removeStrokes_removesStrokeAndCreatesPendingRemoval() {
+
+        val inputs = MutableStrokeInputBatch()
+            .add(
+                InputToolType.STYLUS,
+                10f,
+                20f,
+                0L,
+                1f,
+                0.5f,
+                0f,
+                0f
+            )
+            .add(
+                InputToolType.STYLUS,
+                20f,
+                30f,
+                10L,
+                1f,
+                0.5f,
+                0f,
+                0f
+            )
+
+        val stroke = Stroke(
+            brush = InkBrushes.defaultPen,
+            inputs = inputs
+        )
+
+        val workWithStroke = StudentWork()
+            .addStrokes(listOf(stroke))
+
+        val trackedStroke =
+            workWithStroke.document.strokes.first()
+
+        val result = workWithStroke.removeStrokes(
+            setOf(trackedStroke)
+        )
+
+        assertEquals(2L, result.revision)
+        assertTrue(result.document.strokes.isEmpty())
+        assertEquals(2, result.pendingChanges.size)
+
+        val removalChange =
+            result.pendingChanges.last().change
+
+        assertTrue(removalChange is InkChange.StrokeRemoved)
+
+        val removed =
+            removalChange as InkChange.StrokeRemoved
+
+        assertEquals(
+            trackedStroke.id,
+            removed.strokeId
+        )
+    }
 }
