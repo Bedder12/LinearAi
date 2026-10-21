@@ -1,4 +1,4 @@
-package com.example.myapplication.analysis.DTOs
+package com.example.myapplication.analysis.transport
 
 sealed interface InkChangePayload{
 
