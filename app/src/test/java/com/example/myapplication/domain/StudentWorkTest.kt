@@ -1,10 +1,6 @@
-package com.example.myapplication
+package com.example.myapplication.domain
 
-import com.example.myapplication.domain.InkChange
-import com.example.myapplication.domain.PendingInkChange
-import com.example.myapplication.domain.StudentWork
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertTrue
+import junit.framework.TestCase
 import org.junit.Test
 
 class StudentWorkTest {
@@ -17,14 +13,14 @@ class StudentWorkTest {
 
         val result = work.clear()
 
-        assertEquals(4L, result.revision)
-        assertTrue(result.document.strokes.isEmpty())
-        assertEquals(1, result.pendingChanges.size)
-        assertEquals(
+        TestCase.assertEquals(4L, result.revision)
+        TestCase.assertTrue(result.document.strokes.isEmpty())
+        TestCase.assertEquals(1, result.pendingChanges.size)
+        TestCase.assertEquals(
             InkChange.DocumentCleared,
             result.pendingChanges.first().change
         )
-        assertEquals(
+        TestCase.assertEquals(
             4L,
             result.pendingChanges.first().revision
         )
@@ -55,8 +51,8 @@ class StudentWorkTest {
             acceptedRevision = 2L
         )
 
-        assertEquals(1, result.pendingChanges.size)
-        assertEquals(
+        TestCase.assertEquals(1, result.pendingChanges.size)
+        TestCase.assertEquals(
             3L,
             result.pendingChanges.first().revision
         )

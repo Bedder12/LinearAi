@@ -1,13 +1,10 @@
-package com.example.myapplication
+package com.example.myapplication.domain
 
 import androidx.ink.brush.InputToolType
 import androidx.ink.strokes.MutableStrokeInputBatch
 import androidx.ink.strokes.Stroke
-import com.example.myapplication.domain.InkChange
-import com.example.myapplication.domain.StudentWork
 import com.example.myapplication.ink.InkBrushes
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertTrue
+import junit.framework.TestCase
 import org.junit.Test
 
 class StudentWorkInstrumentedTest {
@@ -48,21 +45,21 @@ class StudentWorkInstrumentedTest {
             listOf(stroke)
         )
 
-        assertEquals(1L, result.revision)
-        assertEquals(1, result.document.strokes.size)
-        assertEquals(1, result.pendingChanges.size)
+        TestCase.assertEquals(1L, result.revision)
+        TestCase.assertEquals(1, result.document.strokes.size)
+        TestCase.assertEquals(1, result.pendingChanges.size)
 
         val trackedStroke = result.document.strokes.first()
 
         val change =
             result.pendingChanges.first().change
 
-        assertTrue(change is InkChange.StrokeAdded)
+        TestCase.assertTrue(change is InkChange.StrokeAdded)
 
         val addedChange =
             change as InkChange.StrokeAdded
 
-        assertEquals(
+        TestCase.assertEquals(
             trackedStroke.id,
             addedChange.stroke.id
         )
@@ -108,19 +105,19 @@ class StudentWorkInstrumentedTest {
             setOf(trackedStroke)
         )
 
-        assertEquals(2L, result.revision)
-        assertTrue(result.document.strokes.isEmpty())
-        assertEquals(2, result.pendingChanges.size)
+        TestCase.assertEquals(2L, result.revision)
+        TestCase.assertTrue(result.document.strokes.isEmpty())
+        TestCase.assertEquals(2, result.pendingChanges.size)
 
         val removalChange =
             result.pendingChanges.last().change
 
-        assertTrue(removalChange is InkChange.StrokeRemoved)
+        TestCase.assertTrue(removalChange is InkChange.StrokeRemoved)
 
         val removed =
             removalChange as InkChange.StrokeRemoved
 
-        assertEquals(
+        TestCase.assertEquals(
             trackedStroke.id,
             removed.strokeId
         )

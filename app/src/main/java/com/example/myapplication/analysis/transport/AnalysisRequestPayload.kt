@@ -1,12 +1,9 @@
 package com.example.myapplication.analysis.transport
 
-import com.example.myapplication.domain.StudentWork
+import kotlinx.serialization.Serializable
 
-fun StudentWork.toAnalysisRequestPayload(): AnalysisRequestPayload {
-    return AnalysisRequestPayload(
-        revision = revision,
-        changes = pendingChanges.map { pendingChange ->
-            pendingChange.toPayload()
-        }
-    )
-}
+@Serializable
+data class AnalysisRequestPayload(
+    val revision: Long,
+    val changes: List<PendingInkChangePayload>
+)
