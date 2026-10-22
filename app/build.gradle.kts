@@ -50,6 +50,7 @@ android {
 
 dependencies {
     val inkVersion = "1.0.0"
+    testImplementation(libs.kotlinx.coroutines.test)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
