@@ -6,24 +6,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.example.myapplication.domain.StudentWork
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.analysis.network.AnalysisNetwork
+import com.example.myapplication.analysis.repository.AnalysisRepository
 import com.example.myapplication.ink.InkSurface
 import com.example.myapplication.ink.InkTool
+import com.example.myapplication.ui.workspace.MathWorkspaceViewModel
+import com.example.myapplication.ui.workspace.MathWorkspaceViewModelFactory
+
 @Composable
 fun MathWorkspaceScreen() {
 
-    var studentWork by remember {
-        mutableStateOf(StudentWork())
-    }
+    val viewModel: MathWorkspaceViewModel = viewModel(
+        factory = MathWorkspaceViewModelFactory(
+            analysisRepository = AnalysisRepository(
+                api = AnalysisNetwork.api
+            )
+        )
+    )
 
-    var selectedTool by remember {
-        mutableStateOf(InkTool.PEN)
-    }
+    val studentWork = viewModel.studentWork
+    val selectedTool = viewModel.selectedTool
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -33,7 +37,7 @@ fun MathWorkspaceScreen() {
 
             Button(
                 onClick = {
-                    selectedTool = InkTool.PEN
+                    viewModel.selectTool(InkTool.PEN)
                 }
             ) {
                 Text("Pen")
@@ -41,7 +45,7 @@ fun MathWorkspaceScreen() {
 
             Button(
                 onClick = {
-                    selectedTool = InkTool.ERASER
+                    viewModel.selectTool(InkTool.ERASER)
                 }
             ) {
                 Text("Eraser")
@@ -49,10 +53,18 @@ fun MathWorkspaceScreen() {
 
             Button(
                 onClick = {
-                    studentWork = studentWork.clear()
+                    viewModel.clear()
                 }
             ) {
                 Text("Clear")
+            }
+
+            Button(
+                onClick = {
+                    viewModel.check()
+                }
+            ) {
+                Text("Check")
             }
         }
 
@@ -63,12 +75,13 @@ fun MathWorkspaceScreen() {
             selectedTool = selectedTool,
 
             onStrokesAdded = { newStrokes ->
-                studentWork = studentWork.addStrokes(newStrokes)
+                viewModel.addStrokes(newStrokes)
             },
 
             onStrokesRemoved = { strokesToRemove ->
-                studentWork = studentWork.removeStrokes(strokesToRemove)
+                viewModel.removeStrokes(strokesToRemove)
             },
+
             modifier = Modifier.weight(1f)
         )
     }

@@ -5,7 +5,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
-class AnalysisNetwork {
+object AnalysisNetwork {
 
     private val json = Json {
         ignoreUnknownKeys = true
