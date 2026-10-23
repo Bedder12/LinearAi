@@ -3,8 +3,27 @@ name: Android CI
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - "app/**"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - ".github/workflows/android.yml"
+
   pull_request:
     branches: [ "main" ]
+    paths:
+      - "app/**"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - ".github/workflows/android.yml"
 
 jobs:
   build:
