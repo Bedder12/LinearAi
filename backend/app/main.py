@@ -2,7 +2,6 @@ from fastapi import FastAPI
 
 from app.api.analysis import router as analysis_router
 
-
 app = FastAPI(
     title="Linear AI API",
     version="0.1.0",
