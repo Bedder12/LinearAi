@@ -6,13 +6,18 @@ import org.junit.Test
 class StudentWorkTest {
 
     @Test
-    fun clear_incrementsRevision_andAddsClearChange() {
+    fun clear_incrementsRevision_addsClearChange_andPreservesWorkSessionId() {
         val work = StudentWork(
+            workSessionId = "550e8400-e29b-41d4-a716-446655440000",
             revision = 3L
         )
 
         val result = work.clear()
 
+        TestCase.assertEquals(
+            "550e8400-e29b-41d4-a716-446655440000",
+            result.workSessionId
+        )
         TestCase.assertEquals(4L, result.revision)
         TestCase.assertTrue(result.document.strokes.isEmpty())
         TestCase.assertEquals(1, result.pendingChanges.size)
@@ -30,6 +35,7 @@ class StudentWorkTest {
     fun markChangesSynced_removesAcceptedChangesAndKeepsNewerOnes() {
 
         val work = StudentWork(
+            workSessionId = "550e8400-e29b-41d4-a716-446655440000",
             revision = 3L,
             pendingChanges = listOf(
                 PendingInkChange(
@@ -51,6 +57,10 @@ class StudentWorkTest {
             acceptedRevision = 2L
         )
 
+        TestCase.assertEquals(
+            "550e8400-e29b-41d4-a716-446655440000",
+            result.workSessionId
+        )
         TestCase.assertEquals(1, result.pendingChanges.size)
         TestCase.assertEquals(
             3L,

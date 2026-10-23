@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -38,6 +39,7 @@ class PendingInkChangePayload(BaseModel):
 
 
 class AnalysisRequestPayload(BaseModel):
+    workSessionId: UUID
     revision: int
     changes: list[PendingInkChangePayload]
 

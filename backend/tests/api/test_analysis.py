@@ -4,11 +4,14 @@ from app.main import app
 
 client = TestClient(app)
 
+WORK_SESSION_ID = "550e8400-e29b-41d4-a716-446655440000"
+
 
 def test_analysis_check_accepts_valid_request() -> None:
     response = client.post(
         "/analysis/check",
         json={
+            "workSessionId": WORK_SESSION_ID,
             "revision": 3,
             "changes": [
                 {
@@ -28,10 +31,23 @@ def test_analysis_check_accepts_valid_request() -> None:
     }
 
 
-def test_analysis_check_rejects_invalid_request() -> None:
+def test_analysis_check_rejects_missing_required_fields() -> None:
     response = client.post(
         "/analysis/check",
         json={
+            "changes": [],
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_analysis_check_rejects_invalid_work_session_id() -> None:
+    response = client.post(
+        "/analysis/check",
+        json={
+            "workSessionId": "not-a-uuid",
+            "revision": 1,
             "changes": [],
         },
     )

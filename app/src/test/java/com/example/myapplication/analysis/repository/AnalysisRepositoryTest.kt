@@ -35,6 +35,7 @@ class AnalysisRepositoryTest {
         )
 
         val studentWork = StudentWork(
+            workSessionId = "550e8400-e29b-41d4-a716-446655440000",
             revision = 7L,
             pendingChanges = listOf(
                 PendingInkChange(
@@ -49,6 +50,10 @@ class AnalysisRepositoryTest {
         val response = repository.analyze(studentWork)
 
         assertNotNull(capturedRequest)
+        assertEquals(
+            "550e8400-e29b-41d4-a716-446655440000",
+            capturedRequest!!.workSessionId
+        )
         assertEquals(7L, capturedRequest!!.revision)
         assertEquals(1, capturedRequest!!.changes.size)
         assertEquals(7L, capturedRequest!!.changes.first().revision)

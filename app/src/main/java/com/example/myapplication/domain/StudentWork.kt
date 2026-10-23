@@ -1,8 +1,10 @@
 package com.example.myapplication.domain
 
 import androidx.ink.strokes.Stroke
+import java.util.UUID
 
 data class StudentWork(
+    val workSessionId: String = UUID.randomUUID().toString(),
     val document: InkDocument = InkDocument(),
     val revision: Long = 0L,
     val pendingChanges: List<PendingInkChange> = emptyList()
@@ -26,14 +28,14 @@ data class StudentWork(
             ),
             revision = nextRevision,
             pendingChanges = pendingChanges +
-                    trackedStrokes.map { trackedStroke ->
-                        PendingInkChange(
-                            revision = nextRevision,
-                            change = InkChange.StrokeAdded(
-                                stroke = trackedStroke
-                            )
+                trackedStrokes.map { trackedStroke ->
+                    PendingInkChange(
+                        revision = nextRevision,
+                        change = InkChange.StrokeAdded(
+                            stroke = trackedStroke
                         )
-                    }
+                    )
+                }
         )
     }
 
@@ -47,14 +49,14 @@ data class StudentWork(
             document = document.removeStrokes(strokesToRemove),
             revision = nextRevision,
             pendingChanges = pendingChanges +
-                    strokesToRemove.map { trackedStroke ->
-                        PendingInkChange(
-                            revision = nextRevision,
-                            change = InkChange.StrokeRemoved(
-                                strokeId = trackedStroke.id
-                            )
+                strokesToRemove.map { trackedStroke ->
+                    PendingInkChange(
+                        revision = nextRevision,
+                        change = InkChange.StrokeRemoved(
+                            strokeId = trackedStroke.id
                         )
-                    }
+                    )
+                }
         )
     }
 
@@ -66,10 +68,10 @@ data class StudentWork(
             document = document.clear(),
             revision = nextRevision,
             pendingChanges = pendingChanges +
-                    PendingInkChange(
-                        revision = nextRevision,
-                        change = InkChange.DocumentCleared
-                    )
+                PendingInkChange(
+                    revision = nextRevision,
+                    change = InkChange.DocumentCleared
+                )
         )
     }
 

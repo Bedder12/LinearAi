@@ -10,9 +10,10 @@ import org.junit.Test
 class AnalysisRequestPayloadMapperTest {
 
     @Test
-    fun studentWork_mapsRevisionAndPendingChanges() {
+    fun studentWork_mapsSessionRevisionAndPendingChanges() {
 
         val studentWork = StudentWork(
+            workSessionId = "550e8400-e29b-41d4-a716-446655440000",
             revision = 7L,
             pendingChanges = listOf(
                 PendingInkChange(
@@ -26,6 +27,11 @@ class AnalysisRequestPayloadMapperTest {
 
         val result =
             studentWork.toAnalysisRequestPayload()
+
+        assertEquals(
+            "550e8400-e29b-41d4-a716-446655440000",
+            result.workSessionId
+        )
 
         assertEquals(
             7L,
@@ -47,12 +53,12 @@ class AnalysisRequestPayloadMapperTest {
 
         assertTrue(
             pendingChange.change
-                    is InkChangePayload.StrokeRemoved
+                is InkChangePayload.StrokeRemoved
         )
 
         val removed =
             pendingChange.change
-                    as InkChangePayload.StrokeRemoved
+                as InkChangePayload.StrokeRemoved
 
         assertEquals(
             "stroke-123",
