@@ -24,7 +24,8 @@ def get_db():
 
 @router.post("/check", response_model=AnalysisResponsePayload)
 def check_analysis(
-    request: AnalysisRequestPayload, db: Session = Depends(get_db)
+    request: AnalysisRequestPayload,
+    db: Session = Depends(get_db),
 ) -> AnalysisResponsePayload:
     try:
         revision = apply_revisions(db, request)
