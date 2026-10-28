@@ -65,6 +65,7 @@ def test_persist_replay_retry_and_conflict(db_engine):
         ).order_by(InkChange.revision, InkChange.position)).all()
         assert len(events) == 3
         assert events[0].payload["stroke"]["points"][0]["x"] == 2.5
+        db.rollback()  # End the read-only transaction before testing new writes.
 
         with pytest.raises(RevisionConflict):
             apply_revisions(db, request(sid, 1, [(1, stroke("different"))]))
