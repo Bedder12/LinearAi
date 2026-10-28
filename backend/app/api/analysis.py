@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -25,7 +27,7 @@ def get_db():
 @router.post("/check", response_model=AnalysisResponsePayload)
 def check_analysis(
     request: AnalysisRequestPayload,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> AnalysisResponsePayload:
     try:
         revision = apply_revisions(db, request)
