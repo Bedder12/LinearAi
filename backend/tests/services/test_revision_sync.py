@@ -3,7 +3,7 @@ from uuid import UUID
 import pytest
 
 from app.schemas.analysis import AnalysisRequestPayload
-from app.services.revision_sync import InvalidInkChange, RevisionGap
+from app.services.revision_sync import InvalidInkChange
 
 
 def test_request_contract_parses_events() -> None:
