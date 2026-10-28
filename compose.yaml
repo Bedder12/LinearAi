@@ -1,0 +1,10 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "127.0.0.1:8080:8080"
+    init: true
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
