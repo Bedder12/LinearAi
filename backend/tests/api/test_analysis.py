@@ -1,9 +1,4 @@
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-
-from app.api.analysis import get_db
 from app.main import app
 
 WORK_SESSION_ID = "550e8400-e29b-41d4-a716-446655440000"
