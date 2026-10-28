@@ -1,0 +1,26 @@
+# Optional development database. Use with: docker compose -f compose.yaml -f compose.postgres.yaml ...
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: linear_ai
+      POSTGRES_USER: linear_ai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your shell or .env}
+    volumes:
+      - linear_ai_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U linear_ai -d linear_ai"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    environment:
+      DATABASE_URL: postgresql+psycopg://linear_ai:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your shell or .env}@db:5432/linear_ai
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  linear_ai_postgres:
