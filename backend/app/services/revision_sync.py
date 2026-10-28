@@ -1,5 +1,4 @@
 from collections import defaultdict
-from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
@@ -50,11 +49,6 @@ def apply_revisions(db: Session, request: AnalysisRequestPayload) -> int:
             raise RuntimeError("work session could not be loaded")
 
         accepted = session.accepted_revision
-        if request.revision < accepted:
-            # A stale request may be safely acknowledged only if every supplied event
-            # matches the previously committed event history.
-            pass
-
         if grouped and max(grouped) > request.revision:
             raise InvalidInkChange("changes exceed request revision")
 
