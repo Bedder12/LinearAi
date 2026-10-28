@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 WORK_SESSION_ID = "550e8400-e29b-41d4-a716-446655440000"
