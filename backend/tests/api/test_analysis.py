@@ -1,18 +1,29 @@
+import pytest
 from fastapi.testclient import TestClient
 
+from app.api.analysis import get_db
 from app.main import app
 
-WORK_SESSION_ID = "550e8400-e29b-41d4-a716-446655440000"
+
+@pytest.fixture()
+def client():
+    def unused_database():
+        yield None
+
+    app.dependency_overrides[get_db] = unused_database
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.pop(get_db, None)
 
 
-def test_invalid_request_does_not_need_database() -> None:
-    client = TestClient(app)
+def test_invalid_request_does_not_need_database(client):
     response = client.post("/analysis/check", json={"changes": []})
     assert response.status_code == 422
 
 
-def test_invalid_session_id() -> None:
-    client = TestClient(app)
+def test_invalid_session_id(client):
     response = client.post(
         "/analysis/check",
         json={"workSessionId": "not-a-uuid", "revision": 1, "changes": []},
