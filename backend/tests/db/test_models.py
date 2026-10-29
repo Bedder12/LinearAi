@@ -8,7 +8,7 @@ def test_storage_schema_has_expected_constraints() -> None:
     changes = Base.metadata.tables["ink_changes"]
 
     assert "accepted_revision" in work.columns
-    assert {"work_session_id", "revision", "position", "payload"} <= set(changes.columns)
+    assert {"work_session_id", "revision", "position", "payload"} <= set(changes.columns.keys())
     assert any(
         set(constraint.columns.keys()) == {"work_session_id", "revision", "position"}
         for constraint in changes.constraints
