@@ -46,7 +46,7 @@ def check_analysis(
             detail="The request is missing required revisions.",
             accepted_revision=exc.accepted_revision,
         )
-    except RevisionConflict as exc:
+    except RevisionConflict:
         return problem_response(
             status=409, kind="revision-conflict", title="Revision conflict",
             detail="A previously accepted revision has different content.",
