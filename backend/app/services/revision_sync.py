@@ -10,9 +10,9 @@ from app.db.revision_repository import (
 )
 from app.schemas.analysis import AnalysisRequestPayload
 from app.services.revision_rules import (
-    InvalidInkChange,
-    RevisionConflict,
-    RevisionGap,
+    InvalidInkChange as InvalidInkChange,
+    RevisionConflict as RevisionConflict,
+    RevisionGap as RevisionGap,
     active_stroke_ids,
     apply_stroke_rule,
     group_changes,
