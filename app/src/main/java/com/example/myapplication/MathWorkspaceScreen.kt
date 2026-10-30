@@ -61,12 +61,12 @@ fun MathWorkspaceScreen() {
 
         Text("Revision: ${studentWork.revision}")
         Text(
-            when (syncState) {
+            when (val state = syncState) {
                 SyncState.Idle -> "Not synchronized"
                 SyncState.Syncing -> "Saving changes…"
                 SyncState.Synced -> "Changes saved"
                 is SyncState.NeedsRecovery ->
-                    "Sync paused: server revision ${syncState.acceptedRevision}. Keep your drawing."
+                    "Sync paused: server revision ${state.acceptedRevision}. Keep your drawing."
                 SyncState.Conflict -> "Sync conflict. Your local changes are preserved."
                 SyncState.InvalidRequest -> "Invalid sync request. Your drawing is preserved."
                 SyncState.TemporaryFailure -> "Connection unavailable. Tap Check to retry."
