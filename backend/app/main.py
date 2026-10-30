@@ -1,6 +1,8 @@
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 
 from app.api.analysis import router as analysis_router
+from app.api.problems import request_validation_problem
 
 app = FastAPI(
     title="Linear AI API",
@@ -8,6 +10,7 @@ app = FastAPI(
 )
 
 app.include_router(analysis_router)
+app.add_exception_handler(RequestValidationError, request_validation_problem)
 
 
 @app.get("/health")
