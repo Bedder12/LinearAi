@@ -66,7 +66,11 @@ class MathWorkspaceViewModel(
                     is SyncResult.Success -> {
                         // Never clear local revisions beyond those sent in this snapshot.
                         studentWork = studentWork.markChangesSynced(result.acceptedRevision)
-                        syncState = SyncState.Synced
+                        syncState = if (studentWork.pendingChanges.isEmpty()) {
+                            SyncState.Synced
+                        } else {
+                            SyncState.Idle
+                        }
                     }
                     is SyncResult.RevisionGap ->
                         syncState = SyncState.NeedsRecovery(result.acceptedRevision)
