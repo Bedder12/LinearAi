@@ -21,6 +21,9 @@ def client():
 def test_invalid_request_does_not_need_database(client):
     response = client.post("/analysis/check", json={"changes": []})
     assert response.status_code == 422
+    assert response.headers["content-type"] == "application/problem+json"
+    assert response.json()["type"] == "/problems/request-validation"
+    assert response.json()["status"] == 422
 
 
 def test_invalid_session_id(client):

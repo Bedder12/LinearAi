@@ -1,8 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from app.api.problems import ProblemDetails, problem_response
 from app.schemas.analysis import AnalysisRequestPayload, AnalysisResponsePayload
 from app.services.revision_sync import (
     InvalidInkChange,
@@ -24,17 +26,34 @@ def get_db():
         yield session
 
 
-@router.post("/check", response_model=AnalysisResponsePayload)
+@router.post(
+    "/check",
+    response_model=AnalysisResponsePayload,
+    responses={
+        409: {"model": ProblemDetails, "description": "Revision synchronization conflict"},
+        422: {"model": ProblemDetails, "description": "Invalid request or ink change"},
+    },
+)
 def check_analysis(
     request: AnalysisRequestPayload,
     db: Annotated[Session, Depends(get_db)],
-) -> AnalysisResponsePayload:
+) -> AnalysisResponsePayload | JSONResponse:
     try:
         revision = apply_revisions(db, request)
     except RevisionGap as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
-    except RevisionConflict as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return problem_response(
+            status=409, kind="revision-gap", title="Revision gap",
+            detail="The request is missing required revisions.",
+            accepted_revision=exc.accepted_revision,
+        )
+    except RevisionConflict:
+        return problem_response(
+            status=409, kind="revision-conflict", title="Revision conflict",
+            detail="A previously accepted revision has different content.",
+        )
     except InvalidInkChange as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return problem_response(
+            status=422, kind="invalid-ink-change", title="Invalid ink change",
+            detail=str(exc),
+        )
     return AnalysisResponsePayload(acceptedRevision=revision, status="accepted")

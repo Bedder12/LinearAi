@@ -10,7 +10,9 @@ class RevisionConflict(Exception):
 
 
 class RevisionGap(Exception):
-    pass
+    def __init__(self, accepted_revision: int):
+        self.accepted_revision = accepted_revision
+        super().__init__("missing revision(s)")
 
 
 class InvalidInkChange(Exception):
@@ -41,9 +43,9 @@ def new_revisions_for(
     if new_revisions:
         expected = list(range(accepted + 1, requested + 1))
         if new_revisions != expected:
-            raise RevisionGap("missing revision(s)")
+            raise RevisionGap(accepted)
     elif requested > accepted:
-        raise RevisionGap("missing revision(s)")
+        raise RevisionGap(accepted)
     return new_revisions
 
 

@@ -79,17 +79,61 @@ def test_http_persists_strokes_and_detects_conflicting_retry(db_client):
             },
         }],
     }
-    assert client.post("/analysis/check", json=conflicting).status_code == 409
+    conflict_response = client.post("/analysis/check", json=conflicting)
+    assert conflict_response.status_code == 409
+    assert conflict_response.headers["content-type"] == "application/problem+json"
+    assert conflict_response.json()["type"] == "/problems/revision-conflict"
+    assert conflict_response.json()["status"] == 409
 
     gap = {
         "workSessionId": session_id,
         "revision": 3,
         "changes": [{"revision": 3, "change": {"type": "document_cleared"}}],
     }
-    assert client.post("/analysis/check", json=gap).status_code == 409
+    gap_response = client.post("/analysis/check", json=gap)
+    assert gap_response.status_code == 409
+    assert gap_response.headers["content-type"] == "application/problem+json"
+    assert gap_response.json()["type"] == "/problems/revision-gap"
+    assert gap_response.json()["acceptedRevision"] == 1
+    assert gap_response.json()["status"] == 409
 
     with factory() as db:
         assert db.get(WorkSession, session_id).accepted_revision == 1
         assert len(db.scalars(select(InkChange).where(
             InkChange.work_session_id == session_id
         )).all()) == 1
+
+
+def test_invalid_stroke_returns_problem_details(db_client):
+    client, factory = db_client
+    session_id = str(uuid4())
+    response = client.post("/analysis/check", json={
+        "workSessionId": session_id,
+        "revision": 1,
+        "changes": [{
+            "revision": 1,
+            "change": {"type": "stroke_removed", "strokeId": "missing"},
+        }],
+    })
+    assert response.status_code == 422
+    assert response.headers["content-type"] == "application/problem+json"
+    assert response.json()["type"] == "/problems/invalid-ink-change"
+    assert response.json()["status"] == 422
+
+    with factory() as db:
+        assert db.get(WorkSession, session_id) is None
+
+
+def test_initial_revision_gap_reports_zero(db_client):
+    client, factory = db_client
+    session_id = str(uuid4())
+    response = client.post("/analysis/check", json={
+        "workSessionId": session_id,
+        "revision": 2,
+        "changes": [{"revision": 2, "change": {"type": "document_cleared"}}],
+    })
+    assert response.status_code == 409
+    assert response.json()["acceptedRevision"] == 0
+
+    with factory() as db:
+        assert db.get(WorkSession, session_id) is None
