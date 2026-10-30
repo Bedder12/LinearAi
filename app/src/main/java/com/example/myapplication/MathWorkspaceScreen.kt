@@ -14,6 +14,7 @@ import com.example.myapplication.ink.InkSurface
 import com.example.myapplication.ink.InkTool
 import com.example.myapplication.ui.workspace.MathWorkspaceViewModel
 import com.example.myapplication.ui.workspace.MathWorkspaceViewModelFactory
+import com.example.myapplication.ui.workspace.SyncState
 
 @Composable
 fun MathWorkspaceScreen() {
@@ -28,6 +29,9 @@ fun MathWorkspaceScreen() {
 
     val studentWork = viewModel.studentWork
     val selectedTool = viewModel.selectedTool
+    val syncState = viewModel.syncState
+    val needsReconciliation = syncState is SyncState.NeedsRecovery ||
+        syncState is SyncState.Conflict || syncState is SyncState.InvalidRequest
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -35,40 +39,40 @@ fun MathWorkspaceScreen() {
 
         Row {
 
-            Button(
-                onClick = {
-                    viewModel.selectTool(InkTool.PEN)
-                }
-            ) {
+            Button(onClick = { viewModel.selectTool(InkTool.PEN) }) {
                 Text("Pen")
             }
 
-            Button(
-                onClick = {
-                    viewModel.selectTool(InkTool.ERASER)
-                }
-            ) {
+            Button(onClick = { viewModel.selectTool(InkTool.ERASER) }) {
                 Text("Eraser")
             }
 
-            Button(
-                onClick = {
-                    viewModel.clear()
-                }
-            ) {
+            Button(onClick = { viewModel.clear() }) {
                 Text("Clear")
             }
 
             Button(
-                onClick = {
-                    viewModel.check()
-                }
+                enabled = syncState !is SyncState.Syncing && !needsReconciliation,
+                onClick = { viewModel.check() }
             ) {
                 Text("Check")
             }
         }
 
         Text("Revision: ${studentWork.revision}")
+        Text(
+            when (val state = syncState) {
+                SyncState.Idle -> "Not synchronized"
+                SyncState.Syncing -> "Saving changes…"
+                SyncState.Synced -> "Changes saved"
+                is SyncState.NeedsRecovery ->
+                    "Sync paused: server revision ${state.acceptedRevision}. Keep your drawing."
+                SyncState.Conflict -> "Sync conflict. Your local changes are preserved."
+                SyncState.InvalidRequest -> "Invalid sync request. Your drawing is preserved."
+                SyncState.TemporaryFailure -> "Connection unavailable. Tap Check to retry."
+                SyncState.UnexpectedFailure -> "Sync failed. Tap Check to retry."
+            }
+        )
 
         InkSurface(
             document = studentWork.document,
