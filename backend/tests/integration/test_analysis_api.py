@@ -79,14 +79,23 @@ def test_http_persists_strokes_and_detects_conflicting_retry(db_client):
             },
         }],
     }
-    assert client.post("/analysis/check", json=conflicting).status_code == 409
+    conflict_response = client.post("/analysis/check", json=conflicting)
+    assert conflict_response.status_code == 409
+    assert conflict_response.headers["content-type"] == "application/problem+json"
+    assert conflict_response.json()["type"] == "/problems/revision-conflict"
+    assert conflict_response.json()["status"] == 409
 
     gap = {
         "workSessionId": session_id,
         "revision": 3,
         "changes": [{"revision": 3, "change": {"type": "document_cleared"}}],
     }
-    assert client.post("/analysis/check", json=gap).status_code == 409
+    gap_response = client.post("/analysis/check", json=gap)
+    assert gap_response.status_code == 409
+    assert gap_response.headers["content-type"] == "application/problem+json"
+    assert gap_response.json()["type"] == "/problems/revision-gap"
+    assert gap_response.json()["acceptedRevision"] == 1
+    assert gap_response.json()["status"] == 409
 
     with factory() as db:
         assert db.get(WorkSession, session_id).accepted_revision == 1
