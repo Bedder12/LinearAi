@@ -102,3 +102,38 @@ def test_http_persists_strokes_and_detects_conflicting_retry(db_client):
         assert len(db.scalars(select(InkChange).where(
             InkChange.work_session_id == session_id
         )).all()) == 1
+
+
+def test_invalid_stroke_returns_problem_details(db_client):
+    client, factory = db_client
+    session_id = str(uuid4())
+    response = client.post("/analysis/check", json={
+        "workSessionId": session_id,
+        "revision": 1,
+        "changes": [{
+            "revision": 1,
+            "change": {"type": "stroke_removed", "strokeId": "missing"},
+        }],
+    })
+    assert response.status_code == 422
+    assert response.headers["content-type"] == "application/problem+json"
+    assert response.json()["type"] == "/problems/invalid-ink-change"
+    assert response.json()["status"] == 422
+
+    with factory() as db:
+        assert db.get(WorkSession, session_id) is None
+
+
+def test_initial_revision_gap_reports_zero(db_client):
+    client, factory = db_client
+    session_id = str(uuid4())
+    response = client.post("/analysis/check", json={
+        "workSessionId": session_id,
+        "revision": 2,
+        "changes": [{"revision": 2, "change": {"type": "document_cleared"}}],
+    })
+    assert response.status_code == 409
+    assert response.json()["acceptedRevision"] == 0
+
+    with factory() as db:
+        assert db.get(WorkSession, session_id) is None
