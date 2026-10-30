@@ -10,9 +10,9 @@ from app.db.revision_repository import (
 )
 from app.schemas.analysis import AnalysisRequestPayload
 from app.services.revision_rules import (
-    InvalidInkChange as InvalidInkChange,
-    RevisionConflict as RevisionConflict,
-    RevisionGap as RevisionGap,
+    InvalidInkChange,
+    RevisionConflict,
+    RevisionGap,
     active_stroke_ids,
     apply_stroke_rule,
     group_changes,
@@ -20,7 +20,8 @@ from app.services.revision_rules import (
     validate_retry,
 )
 
-# Keep the exceptions and apply_revisions public from this module for existing API callers.
+# Preserve the public imports used by the API and integration tests.
+__all__ = ["InvalidInkChange", "RevisionConflict", "RevisionGap", "apply_revisions"]
 
 
 def apply_revisions(db: Session, request: AnalysisRequestPayload) -> int:
