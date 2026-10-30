@@ -25,9 +25,10 @@ class AnalysisRepository(private val api: AnalysisApi) {
         return try {
             val response = api.check(request)
             if (response.status == "accepted" &&
-                response.acceptedRevision in 0..request.revision
+                response.acceptedRevision >= request.revision
             ) {
-                SyncResult.Success(response.acceptedRevision)
+                // A newer server revision does not authorize acknowledging newer local edits.
+                SyncResult.Success(request.revision)
             } else {
                 SyncResult.UnexpectedFailure
             }
@@ -37,6 +38,8 @@ class AnalysisRepository(private val api: AnalysisApi) {
             mapHttpError(exception)
         } catch (exception: IOException) {
             SyncResult.TemporaryFailure
+        } catch (exception: Exception) {
+            SyncResult.UnexpectedFailure
         }
     }
 
