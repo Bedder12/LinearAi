@@ -1,6 +1,7 @@
 package com.example.myapplication.analysis.repository
 
 import com.example.myapplication.analysis.network.AnalysisApi
+import com.example.myapplication.analysis.transport.AnalysisRequestPayload
 import com.example.myapplication.analysis.transport.toAnalysisRequestPayload
 import com.example.myapplication.domain.StudentWork
 import java.io.IOException
@@ -19,9 +20,10 @@ class AnalysisRepository(private val api: AnalysisApi) {
     private val json = Json { ignoreUnknownKeys = true }
 
     suspend fun analyze(studentWork: StudentWork): SyncResult {
-        // Snapshot the outgoing payload: edits made while the request is in flight
-        // must not alter its revision history or retry semantics.
-        val request = studentWork.toAnalysisRequestPayload()
+        return analyze(studentWork.toAnalysisRequestPayload())
+    }
+
+    suspend fun analyze(request: AnalysisRequestPayload): SyncResult {
         return try {
             val response = api.check(request)
             if (response.status == "accepted" &&
