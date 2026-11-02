@@ -126,7 +126,7 @@ domain/
 
 The API layer handles HTTP concerns. Business orchestration belongs in the service layer, while internal result models remain separate from external JSON contracts.
 
-The current analysis service is intentionally small: it accepts the request revision and returns an accepted result. This is a foundation for the upcoming stateful revision protocol rather than the final analysis behavior.
+The current `/analysis/check` endpoint durably synchronizes ink revisions into PostgreSQL. Revision validation, retry comparison, stroke rules, and transaction orchestration are separated from SQLAlchemy persistence. It acknowledges committed changes; handwriting recognition and mathematical checking are not implemented yet.
 
 ## Backend quick start
 
@@ -216,17 +216,79 @@ install
 → FastAPI import smoke check
 ```
 
+## Synchronization architecture and recovery plan
+
+Linear AI uses a **hybrid consistency model**. Android is **local-first**: students can keep drawing without waiting for network round trips, so the local document can temporarily be ahead of the server. PostgreSQL owns the **authoritative committed revision history**, with atomic transactions and row locking to prevent gaps, conflicting retries, and partial writes. The goal is **eventual convergence** between Android and PostgreSQL when connectivity returns *and* the histories are compatible—not a claim of strong consistency across the network.
+
+```text
+Android local vector ink (StudentWork, pendingChanges)
+          |
+          | POST /analysis/check (workSessionId, revision, ordered changes)
+          v
+FastAPI (HTTP contract + RFC 9457 Problem Details)
+          |
+          v
+Revision service (ordering, retries, stroke validation, transaction)
+          |
+          v
+PostgreSQL (acceptedRevision + durable change history)
+          |
+          | 200 acceptedRevision / 409 revision-gap or revision-conflict
+          v
+Android (acknowledge confirmed changes or preserve pending work)
+```
+
+### Implemented foundation
+
+- Stable `workSessionId`, monotonically increasing revisions, and ordered add/remove/clear events.
+- Atomic PostgreSQL persistence; identical retries are checked against committed events, and missing or conflicting revisions are rejected.
+- RFC 9457 `application/problem+json` responses for revision gaps, conflicts, and invalid requests. A revision gap includes the server's `acceptedRevision`.
+- Android maps HTTP failures to typed synchronization results, displays sync state, prevents overlapping Check requests, and preserves pending changes when synchronization cannot be confirmed.
+- Successful acknowledgment removes only pending changes covered by the sent request, retaining newer edits made during an in-flight request.
+
+**Known limitations:** The Android pending queue currently lives in ViewModel memory, not durable local storage. A revision gap or conflicting history pauses synchronization; automatic reconciliation is not implemented. A UUID alone must not be treated as authorization to access another user's work session.
+
+### Step 1 — Verify the full client-server flow
+
+- Test on an Android emulator with FastAPI and PostgreSQL running: normal saves, identical retries, lost responses, missing revisions, conflicts, and edits made during a request.
+- Verify API success/error schemas, HTTP status codes, server commits, and that local pending work is never silently discarded.
+- Keep independent Android/backend CI plus PostgreSQL integration tests. CI passing is not a substitute for end-to-end verification.
+
+### Step 2 — Implement safe revision reconciliation (current next milestone)
+
+1. On `409 revision-gap`, read the server's `acceptedRevision` and inspect the **original local pending event history**.
+2. Prove that every required revision from `acceptedRevision + 1` through the local request revision is present, ordered, and unchanged. Preserve all events belonging to each revision.
+3. Only when continuity can be established, resend the complete missing range using an immutable request snapshot; the backend can already accept multiple contiguous revisions in one request.
+4. Do not infer matching history merely from revision numbers. If required events are missing, or the server reports `revision-conflict`, **stop automatic synchronization and preserve local ink**.
+5. For network timeouts and transient HTTP failures, retry the **same request** using bounded backoff; an HTTP response may have been lost after a successful commit. Never retry conflicts indefinitely or discard changes based on a failed response.
+6. Keep one active synchronization attempt per work session and prevent an acknowledgment for an old snapshot from clearing edits created afterward.
+7. Test recovery when the server is behind, an acknowledgment is lost, repeated requests arrive, history is incomplete, a conflict occurs, and new strokes are drawn during retry.
+
+**Acceptance criteria:** Recoverable gaps converge without duplicate events or lost ink. Irreconcilable conflicts remain visible and blocked without overwriting either history. Server acceptance remains transactional, and client acknowledgments never exceed the verified request snapshot.
+
+### Step 3 — Durable local persistence and conflict recovery
+
+- Persist the work-session identity, vector document, revision sequence, and pending change journal locally (evaluate Room) so unsynced work survives process death and app restart.
+- Define an authorized server-state read endpoint only when necessary for recovery from missing local history or conflicts. Compare authoritative history before allowing a reset, replay, or other explicit resolution.
+- Establish authenticated work-session ownership and access checks **before** exposing saved sessions to multiple users.
+- Add crash/restart, offline-to-online, repeated-retry, and conflicting-history tests.
+
+### Later — Mathematical analysis pipeline
+
+After synchronization is reliable, introduce handwriting/layout recognition, a structured Math IR, deterministic step verification (starting with Gaussian elimination), detection of the first incorrect step, and concise hint generation. Expensive analysis may run asynchronously after durable ink acceptance, without changing the meaning of the synchronization acknowledgment.
+
+**Architecture constraint:** No Kafka, microservices, CQRS, distributed database, or Redis is justified solely by this synchronization plan. Add infrastructure only when measured requirements call for it.
+
 ## Near-term roadmap
 
-1. Introduce a stable `workSessionId` across Android and backend contracts.
-2. Implement backend session state and accepted revision tracking.
-3. Make incremental change application idempotent and detect revision gaps.
-4. Reconstruct server-side ink state from add/remove/clear events.
-5. Add handwriting and layout recognition.
-6. Introduce a mathematical intermediate representation.
-7. Add deterministic step verification, beginning with row operations.
-8. Identify the first incorrect step.
-9. Generate minimal hints, using an LLM only where it adds value.
+1. [x] Stable work-session identity and revisioned ink changes.
+2. [x] PostgreSQL-backed atomic revision persistence and idempotent retry detection.
+3. [x] Structured API errors and Android-side failure classification.
+4. [ ] End-to-end Android ↔ FastAPI ↔ PostgreSQL verification.
+5. [ ] Safe revision-gap recovery and bounded transport retries (**Step 2**).
+6. [ ] Durable offline pending changes, authenticated session ownership, and explicit conflict recovery.
+7. [ ] Handwriting recognition, Math IR, and deterministic mathematical verification.
+8. [ ] First-incorrect-step detection and minimal hint generation.
 
 ## Design principles
 
