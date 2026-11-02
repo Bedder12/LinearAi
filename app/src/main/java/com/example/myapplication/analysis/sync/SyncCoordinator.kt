@@ -23,7 +23,14 @@ class SyncCoordinator(
         if (initialResult !is SyncResult.RevisionGap) return initialResult
 
         return when (val decision = reconcileRevisionGap(original, initialResult.acceptedRevision)) {
-            is RecoveryDecision.Resend -> sendWithRetries(decision.request)
+            is RecoveryDecision.VerifyThenResend -> {
+                // A gap was checked before overlapping retries by the backend.
+                // Verify the already-accepted entries before trying the missing tail.
+                when (val verified = sendWithRetries(decision.verification)) {
+                    is SyncResult.Success -> sendWithRetries(decision.missing)
+                    else -> verified
+                }
+            }
             RecoveryDecision.Stop -> initialResult
         }
     }
