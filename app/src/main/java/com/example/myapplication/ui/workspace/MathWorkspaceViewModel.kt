@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.analysis.repository.AnalysisRepository
 import com.example.myapplication.analysis.repository.SyncResult
+import com.example.myapplication.analysis.sync.SyncCoordinator
 import com.example.myapplication.domain.StudentWork
 import com.example.myapplication.domain.TrackedStroke
 import com.example.myapplication.ink.InkTool
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 class MathWorkspaceViewModel(
     private val analysisRepository: AnalysisRepository
 ) : ViewModel() {
+    private val syncCoordinator = SyncCoordinator(analysisRepository)
 
     var studentWork by mutableStateOf(StudentWork())
         private set
@@ -62,7 +64,7 @@ class MathWorkspaceViewModel(
 
         viewModelScope.launch {
             try {
-                when (val result = analysisRepository.analyze(snapshot)) {
+                when (val result = syncCoordinator.synchronize(snapshot)) {
                     is SyncResult.Success -> {
                         // Never clear local revisions beyond those sent in this snapshot.
                         studentWork = studentWork.markChangesSynced(result.acceptedRevision)
