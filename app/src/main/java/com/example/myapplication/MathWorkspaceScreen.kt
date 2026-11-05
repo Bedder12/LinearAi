@@ -3,10 +3,14 @@ package com.example.myapplication
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.analysis.network.AnalysisNetwork
 import com.example.myapplication.analysis.repository.AnalysisRepository
@@ -39,13 +43,10 @@ fun MathWorkspaceScreen() {
 
         Row {
 
-            Button(onClick = { viewModel.selectTool(InkTool.PEN) }) {
-                Text("Pen")
-            }
-
-            Button(onClick = { viewModel.selectTool(InkTool.ERASER) }) {
-                Text("Eraser")
-            }
+            WorkspaceToolSelector(
+                selectedTool = selectedTool,
+                onToolSelected = viewModel::selectTool
+            )
 
             Button(onClick = { viewModel.clear() }) {
                 Text("Clear")
@@ -87,6 +88,32 @@ fun MathWorkspaceScreen() {
             },
 
             modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+/**
+ * Slice 01: stateless tool selector.
+ * The ViewModel remains the source of truth for the active ink tool.
+ */
+@Composable
+internal fun WorkspaceToolSelector(
+    selectedTool: InkTool,
+    onToolSelected: (InkTool) -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(horizontal = 8.dp),
+    ) {
+        FilterChip(
+            selected = selectedTool == InkTool.PEN,
+            onClick = { onToolSelected(InkTool.PEN) },
+            label = { Text("Pen") },
+        )
+        FilterChip(
+            selected = selectedTool == InkTool.ERASER,
+            onClick = { onToolSelected(InkTool.ERASER) },
+            label = { Text("Eraser") },
         )
     }
 }
