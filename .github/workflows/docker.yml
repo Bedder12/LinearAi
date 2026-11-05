@@ -2,13 +2,15 @@ name: Backend Docker
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "backend/**"
       - "compose.yaml"
+      - "compose.postgres.yaml"
+      - "scripts/**"
       - ".github/workflows/docker.yml"
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "backend/**"
       - "compose.yaml"
