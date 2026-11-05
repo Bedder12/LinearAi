@@ -9,7 +9,7 @@ object InkInputPolicy {
     ): InkInputChecker {
 
         return when (pointerType) {
-            PointerType.Stylus -> InkInputChecker.DRAW
+            PointerType.Stylus, PointerType.Touch -> InkInputChecker.DRAW
             else -> InkInputChecker.IGNORE
         }
     }
