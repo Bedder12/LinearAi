@@ -9,6 +9,7 @@ object AnalysisNetwork {
 
     private val json = Json {
         ignoreUnknownKeys = true
+        classDiscriminator = "type"
     }
 
     private val retrofit = Retrofit.Builder()
