@@ -2,12 +2,12 @@ name: PostgreSQL Integration
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "backend/**"
       - ".github/workflows/postgres.yml"
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "backend/**"
       - ".github/workflows/postgres.yml"
