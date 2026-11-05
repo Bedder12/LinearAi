@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
     paths:
       - "app/**"
       - "gradle/**"
@@ -14,7 +14,7 @@ on:
       - ".github/workflows/android.yml"
 
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
     paths:
       - "app/**"
       - "gradle/**"
