@@ -1,6 +1,6 @@
 # ADR-001 — Document, Page, and WorkSession identity
 
-**Status:** Proposed; product and API review required
+**Status:** Accepted — provisional S02 planning direction; S02-C contract review required
 **Decision track:** S02-A
 **Code baseline:** `86e5ecdd65bbc127f2da49c03c00732f9ca2b124`
 **Scope:** Domain identity and ownership only. This does not approve an API or database migration.
@@ -14,19 +14,19 @@
 
 Evidence: [StudentWork.kt](../../../../app/src/main/java/com/example/myapplication/domain/StudentWork.kt), [InkDocument.kt](../../../../app/src/main/java/com/example/myapplication/domain/InkDocument.kt), [MathWorkspaceViewModel.kt](../../../../app/src/main/java/com/example/myapplication/ui/workspace/MathWorkspaceViewModel.kt), [analysis.py schema](../../../../backend/app/schemas/analysis.py), [models.py](../../../../backend/app/db/models.py), [revision_sync.py](../../../../backend/app/services/revision_sync.py), [S00 audit](../current-state-audit.md), and [S01 UX specification](../ux-spec.md).
 
-## Proposed model
+## Accepted provisional model
 
 ```text
 Authenticated Owner (future; identity is not authorization)
   1 ── 0..* Document
              1 ── 1..* ordered Page
-             1 ── 1 WorkSession (MVP proposal: stable sync/revision stream)
+             1 ── 1 WorkSession (MVP: stable sync/revision stream)
                          1 ── 0..* revisioned Change
 Page        1 ── 0..* Stroke
 Change      0..1 ── Page (page-targeted ink/page operation; metadata may target Document)
 ```
 
-Give each Document, Page, and WorkSession a distinct stable ID. A WorkSession is a synchronization/revision stream associated with a document, not an app process or editing visit. The MVP proposal is one stable WorkSession per Document; multiple concurrent streams per document remain an open multi-device decision.
+Give each Document, Page, and WorkSession a distinct stable ID. A WorkSession is a synchronization/revision stream associated 1:1 with a document for the MVP, not an app process or editing visit. The user accepted this as a provisional architecture direction. Multi-device concurrent editing remains deferred; one stream does not provide concurrency control.
 
 Every document has at least one active page. Pages have stable identity and explicit order. A stroke belongs to exactly one page; it is not moved when another page is reordered. Create a document, initial page, and work stream as one logical operation. Rename changes metadata only. Reorder changes order only. Clearing a page preserves page identity and does not clear siblings. Page/document removal and restoration preserve IDs; Trash is a document lifecycle state, not ID replacement. Permanent purge and retention need explicit product/security policy. Whether users may remove the final page is not yet approved.
 
@@ -41,12 +41,12 @@ workSessionId= 9f3b2c61-8a47-4d05-b216-3e7c1a9f6048
 ## Alternatives considered
 
 1. **Treat `workSessionId` as `documentId`.** Minimizes identifiers and mapping but permanently overloads the legacy session name and complicates page/document lifecycle and API evolution.
-2. **Separate Document ID and stable WorkSession ID (proposed).** Makes document identity explicit while retaining the current session-keyed revision stream. Requires a mapping and compatibility/migration plan.
+2. **Separate Document ID and stable WorkSession ID (accepted provisionally).** Makes document identity explicit while retaining the current session-keyed revision stream. Requires a mapping and compatibility/migration plan.
 3. **Create a new WorkSession for each app launch/edit visit.** Rejected as the default proposal: it fragments revision history and conflicts with resume and offline continuity.
 
 ## Revision and analysis implications
 
-A document-wide monotonic revision is the least disruptive candidate because the existing backend tracks one accepted revision per WorkSession. Page-targeted events would carry stable `pageId`s, while document metadata/structural events could target the document. This remains a candidate for S02-C, not a settled API contract. Analysis must bind to immutable document/page/revision identity. Whether an edit on another page stales page-scoped feedback requires product agreement and S02-F.
+A document-wide monotonic revision is the accepted provisional direction because the existing backend tracks one accepted revision per WorkSession. Page-targeted events would carry stable `pageId`s, while document metadata/structural events could target the document. S02-C must formally define this contract and existing-client compatibility before it is treated as implementation-approved. Analysis must bind to immutable document/page/revision identity. Whether an edit on another page stales page-scoped feedback requires product agreement and S02-F.
 
 ## Invariants and acceptance gates
 
@@ -59,9 +59,9 @@ A document-wide monotonic revision is the least disruptive candidate because the
 
 Add domain and API tests for these invariants before implementing page operations. S02-C must define revision scope, structural events, old-client behavior, and migration before S10 page operations ship.
 
-## Open approvals and consequences
+## Remaining gates and consequences
 
-- Product: confirm stable one-to-one document/work-stream relationship for MVP, final-page deletion, Trash retention/purge, and result staleness scope.
+- Product: confirm final-page deletion, Trash retention/purge, and result staleness scope.
 - Security: define owner identity and access policy; no user ownership model is currently evidenced.
-- Architecture: decide whether concurrent devices need one or multiple streams per document and how conflicts are represented.
-- Until approvals and S02-C are complete, this ADR is guidance for design discussion only. Current runtime remains a single in-memory work session without pages.
+- Architecture: define whether multi-device sync may be enabled in the future and the required concurrency/conflict model. Concurrent editing remains out of MVP.
+- Current runtime remains a single in-memory work session without pages. This provisional decision does not approve schema/API changes or implementation.

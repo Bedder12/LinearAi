@@ -1,6 +1,6 @@
 # ADR-002 — Durable local state and synchronization outbox
 
-**Status:** Proposed; dependency, backup, and product review required
+**Status:** Accepted — provisional S02 planning direction; technical validation gates outstanding
 **Decision track:** S02-B
 **Code baseline:** `86e5ecdd65bbc127f2da49c03c00732f9ca2b124`
 **Scope:** Android local persistence and delivery guarantees. No production implementation or dependency change is included.
@@ -18,12 +18,12 @@ Evidence: [StudentWork.kt](../../../../app/src/main/java/com/example/myapplicati
 
 | Option | Assessment |
 |---|---|
-| **Room / SQLite** | Proposed preference for a growing, queryable document/page model and an atomic state-plus-outbox transaction. Adds a runtime dependency and schema-migration responsibility. Verify journal/synchronous settings and actual durability assumptions for the supported Android versions/devices. |
+| **Room / SQLite** | Accepted provisional direction for a growing, queryable document/page model and an atomic state-plus-outbox transaction. Adds a runtime dependency and schema-migration responsibility. Verify journal/synchronous settings and actual durability assumptions for the supported Android versions/devices. |
 | DataStore aggregate | Could persist a single small aggregate, but is a weaker fit for a growing event journal, queryable pages, and atomic updates across independently stored records. No dependency is present today. |
 | Atomic JSON/file snapshot | Avoids a database dependency, but locking, replacement atomicity, corruption recovery, concurrent edits, and keeping state/outbox together become application responsibilities. |
 | Direct SQLite | Transactional and viable if dependency constraints preclude Room, at the cost of more hand-written mapping, migration, and testing. |
 
-This is a recommendation to validate Room/SQLite first, not an approved dependency choice. S02-E/G must review lifecycle, backup, security, and testing implications before approval.
+The user accepted Room/SQLite as the provisional local source-of-truth architecture, with a transactional outbox and a repository boundary so Compose/ViewModels do not depend on Room entities. This is not permission to add the dependency, schema, or production implementation. S02-E/G and implementation planning must validate lifecycle, backup, security, and testing implications first.
 
 ## Proposed source-of-truth and transaction boundary
 
@@ -73,10 +73,10 @@ Test every released local schema migration. Decide whether data/outbox participa
 - Import, if supported for a still-live session, is idempotent and preserves the existing session ID/revision/events.
 - Test crash boundaries, corruption, stale backup restore, concurrency, exact retry identity, and every schema migration. Run Android repository tests and Android–FastAPI–PostgreSQL integration against a migrated disposable database before implementation exit.
 
-## Open approvals and consequences
+## Remaining validation gates and consequences
 
-- Product/engineering: approve Room/SQLite or select an alternative; decide foreground-only versus durable background sync.
+- Product/engineering: validate Room/SQLite technical fit and schema migration before implementation. Use foreground synchronization for MVP; background scheduling is deferred until demonstrated need.
 - Product/privacy: define device/cloud backup and restore policy.
 - Architecture: define canonical local ink attributes/serialization version and coordinate contract with S02-D.
 - Release: decide how to communicate old in-memory pending-work loss and whether any live transition checkpoint is feasible.
-- This ADR does not prove process-death durability or backend E2E; both require implementation and tests. S00 remains partial.
+- Verify atomic document/outbox updates, process-death recovery, migration and backup behavior, exact retry identity, and server acknowledgment semantics before implementation. This ADR does not prove local durability or backend E2E; S00 remains partial.
