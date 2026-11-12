@@ -1,6 +1,11 @@
 package com.example.myapplication
 
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Arrangement
@@ -8,7 +13,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,27 +48,22 @@ fun MathWorkspaceScreen() {
     val needsReconciliation = syncState is SyncState.NeedsRecovery ||
         syncState is SyncState.Conflict || syncState is SyncState.InvalidRequest
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    var pagesExpanded by rememberSaveable { mutableStateOf(true) }
 
-        Row {
-
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             WorkspaceToolSelector(
                 selectedTool = selectedTool,
                 onToolSelected = viewModel::selectTool
             )
-
-            Button(onClick = { viewModel.clear() }) {
-                Text("Clear")
-            }
-
+            Button(onClick = { viewModel.clear() }) { Text("Clear") }
             Button(
                 enabled = syncState !is SyncState.Syncing && !needsReconciliation,
                 onClick = { viewModel.check() }
-            ) {
-                Text("Check")
-            }
+            ) { Text("Check") }
         }
 
         Text("Revision: ${studentWork.revision}")
@@ -75,20 +81,40 @@ fun MathWorkspaceScreen() {
             }
         )
 
-        InkSurface(
-            document = studentWork.document,
-            selectedTool = selectedTool,
-
-            onStrokesAdded = { newStrokes ->
-                viewModel.addStrokes(newStrokes)
-            },
-
-            onStrokesRemoved = { strokesToRemove ->
-                viewModel.removeStrokes(strokesToRemove)
-            },
-
-            modifier = Modifier.weight(1f)
-        )
+        BoxWithConstraints(modifier = Modifier.weight(1f)) {
+            val wideLayout = maxWidth >= 720.dp
+            if (wideLayout) {
+                Row(modifier = Modifier.fillMaxSize()) {
+                    WorkspacePageSidebar(
+                        expanded = pagesExpanded,
+                        onToggle = { pagesExpanded = !pagesExpanded },
+                        modifier = Modifier.width(if (pagesExpanded) 176.dp else 104.dp)
+                    )
+                    InkSurface(
+                        document = studentWork.document,
+                        selectedTool = selectedTool,
+                        onStrokesAdded = viewModel::addStrokes,
+                        onStrokesRemoved = viewModel::removeStrokes,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            } else {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    WorkspacePageSidebar(
+                        expanded = pagesExpanded,
+                        onToggle = { pagesExpanded = !pagesExpanded },
+                        compact = true,
+                    )
+                    InkSurface(
+                        document = studentWork.document,
+                        selectedTool = selectedTool,
+                        onStrokesAdded = viewModel::addStrokes,
+                        onStrokesRemoved = viewModel::removeStrokes,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -115,5 +141,39 @@ internal fun WorkspaceToolSelector(
             onClick = { onToolSelected(InkTool.ERASER) },
             label = { Text("Eraser") },
         )
+    }
+}
+
+/**
+ * Slice 02: navigation shell for the existing single-page document.
+ * This is intentionally NOT a multi-page model: Page 1 is a label, not a new page ID.
+ */
+@Composable
+internal fun WorkspacePageSidebar(
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false,
+) {
+    Surface(modifier = modifier, color = MaterialTheme.colorScheme.surfaceVariant) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            Button(onClick = onToggle) {
+                Text(if (expanded) "Hide pages" else "Show pages")
+            }
+            if (expanded) {
+                Text(
+                    text = "Page 1",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(8.dp),
+                )
+                if (!compact) {
+                    Text(
+                        text = "Current document",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                    )
+                }
+            }
+        }
     }
 }
