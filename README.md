@@ -246,7 +246,7 @@ Android (acknowledge confirmed changes or preserve pending work)
 - Android maps HTTP failures to typed synchronization results, displays sync state, prevents overlapping Check requests, and preserves pending changes when synchronization cannot be confirmed.
 - Successful acknowledgment removes only pending changes covered by the sent request, retaining newer edits made during an in-flight request.
 
-**Known limitations:** The Android pending queue currently lives in ViewModel memory, not durable local storage. A revision gap or conflicting history pauses synchronization; automatic reconciliation is not implemented. A UUID alone must not be treated as authorization to access another user's work session.
+**Known limitations:** The Android pending queue currently lives in ViewModel memory, not durable local storage, so unsynchronized work is not protected against process death. The client implements bounded retries and one guarded revision-gap reconciliation attempt, but this has not been verified end to end against a running Android, FastAPI, and PostgreSQL stack. A conflicting or unrecoverable history pauses synchronization. A UUID alone must not be treated as authorization to access another user's work session.
 
 ### Step 1 — Verify the full client-server flow
 
@@ -254,17 +254,11 @@ Android (acknowledge confirmed changes or preserve pending work)
 - Verify API success/error schemas, HTTP status codes, server commits, and that local pending work is never silently discarded.
 - Keep independent Android/backend CI plus PostgreSQL integration tests. CI passing is not a substitute for end-to-end verification.
 
-### Step 2 — Implement safe revision reconciliation (current next milestone)
+### Step 2 — Verify safe revision reconciliation end to end
 
-1. On `409 revision-gap`, read the server's `acceptedRevision` and inspect the **original local pending event history**.
-2. Prove that every required revision from `acceptedRevision + 1` through the local request revision is present, ordered, and unchanged. Preserve all events belonging to each revision.
-3. Only when continuity can be established, resend the complete missing range using an immutable request snapshot; the backend can already accept multiple contiguous revisions in one request.
-4. Do not infer matching history merely from revision numbers. If required events are missing, or the server reports `revision-conflict`, **stop automatic synchronization and preserve local ink**.
-5. For network timeouts and transient HTTP failures, retry the **same request** using bounded backoff; an HTTP response may have been lost after a successful commit. Never retry conflicts indefinitely or discard changes based on a failed response.
-6. Keep one active synchronization attempt per work session and prevent an acknowledgment for an old snapshot from clearing edits created afterward.
-7. Test recovery when the server is behind, an acknowledgment is lost, repeated requests arrive, history is incomplete, a conflict occurs, and new strokes are drawn during retry.
+The Android client implements the guarded recovery flow: on `409 revision-gap`, it inspects the original pending event history, verifies overlapping revisions with the server, and only then resends a complete contiguous missing suffix. Transient failures retry the same immutable request up to three total attempts with bounded delays. Incomplete history or a conflicting retry stops synchronization without acknowledging pending changes.
 
-**Acceptance criteria:** Recoverable gaps converge without duplicate events or lost ink. Irreconcilable conflicts remain visible and blocked without overwriting either history. Server acceptance remains transactional, and client acknowledgments never exceed the verified request snapshot.
+**Remaining verification:** Exercise the behavior against a running Android, FastAPI, and PostgreSQL stack, including lost responses, a server behind the client, incomplete history, conflicting history, and edits made while a request is in flight. Existing Android unit tests cover bounded retries, reconciliation decisions, and preservation of later edits; backend PostgreSQL integration tests require a configured test database.
 
 ### Step 3 — Durable local persistence and conflict recovery
 
@@ -285,7 +279,7 @@ After synchronization is reliable, introduce handwriting/layout recognition, a s
 2. [x] PostgreSQL-backed atomic revision persistence and idempotent retry detection.
 3. [x] Structured API errors and Android-side failure classification.
 4. [ ] End-to-end Android ↔ FastAPI ↔ PostgreSQL verification.
-5. [ ] Safe revision-gap recovery and bounded transport retries (**Step 2**).
+5. [x] Bounded transport retries and guarded revision-gap recovery are implemented; end-to-end verification remains.
 6. [ ] Durable offline pending changes, authenticated session ownership, and explicit conflict recovery.
 7. [ ] Handwriting recognition, Math IR, and deterministic mathematical verification.
 8. [ ] First-incorrect-step detection and minimal hint generation.

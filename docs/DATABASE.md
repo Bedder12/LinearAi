@@ -1,6 +1,8 @@
-# Development database foundation
+# PostgreSQL revision persistence
 
-This change prepares PostgreSQL persistence, but deliberately does **not** modify `POST /analysis/check` to acknowledge persisted changes. The current endpoint still acknowledges requests without storage. It must not be advertised as durable synchronization.
+`POST /analysis/check` applies ink revisions through PostgreSQL-backed storage and returns an acknowledgment only after the transaction commits. The endpoint acknowledges committed ink history; it does not perform mathematical analysis, provide authenticated cloud backup, or protect the Android client's in-memory pending queue from process death.
+
+PostgreSQL integration tests require a migrated database configured through `DATABASE_URL`. They skip when that test database is unavailable, so a passing test run without `DATABASE_URL` does not verify database persistence.
 
 ## Start the optional local database
 
@@ -28,15 +30,17 @@ docker compose -f compose.yaml -f compose.postgres.yaml exec backend alembic upg
 
 The first migration creates `work_sessions` and `ink_changes`. Each ink event is ordered by `(work_session_id, revision, position)` because multiple events can belong to one logical revision. SQLAlchemy models live in `app/db/models.py`.
 
-## Important next implementation
+## Current persistence behavior
 
-Add a storage-backed revision application service which:
-- Locks the work session row while checking and updating its revision.
-- Handles initial revision, sequential changes, duplicate retries and revision gaps explicitly.
-- Applies all events in a revision in one transaction and updates accepted_revision only after commit.
-- Detects conflicting retries; a revision number alone is not proof that a retry has identical content.
-- Validates change ordering and stroke semantics; reconstructs server-side state.
-- Tests rollback, concurrency and persistence across restarts with a real PostgreSQL database.
-- Preserves existing Android payload/response compatibility where possible.
+- The revision service locks the work-session row and applies changes within one transaction.
+- Revisions must be contiguous; identical retries are checked against committed event content, while gaps, conflicting retries, and invalid stroke operations are rejected.
+- Accepted revision and ordered ink events are committed before the API returns `acceptedRevision`.
+- The Android request/response contract remains compatible with the existing client.
 
-No public database port, user authentication, cloud deployment, or extra worker is added by this change.
+## Remaining verification and limitations
+
+- Run the integration tests with a migrated PostgreSQL test database to verify persistence, retries, conflicts, gaps, and transaction behavior.
+- Verify the complete Android-to-FastAPI-to-PostgreSQL flow, including network failures and in-flight edits.
+- The API does not authenticate or authorize work-session owners. A UUID is an identifier, not access control.
+- The Android pending change journal is held in ViewModel memory and is not durable across process death.
+- No cloud deployment, public database port, or background worker is provided.
