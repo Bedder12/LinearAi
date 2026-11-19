@@ -45,6 +45,9 @@ jobs:
       - name: Build debug app
         run: ./gradlew assembleDebug
 
+      - name: Compile instrumented tests
+        run: ./gradlew :app:assembleDebugAndroidTest
+
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
 
