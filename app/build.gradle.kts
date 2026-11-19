@@ -73,6 +73,7 @@ dependencies {
     implementation("androidx.ink:ink-geometry:$inkVersion")
     implementation("androidx.ink:ink-rendering:$inkVersion")
     implementation("androidx.ink:ink-strokes:$inkVersion")
+    androidTestImplementation("androidx.ink:ink-storage:$inkVersion")
 
     testImplementation(libs.junit)
 
