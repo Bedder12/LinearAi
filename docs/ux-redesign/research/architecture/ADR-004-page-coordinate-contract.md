@@ -4,10 +4,14 @@
 **Decision track:** S02-D
 **Code baseline:** `86e5ecdd65bbc127f2da49c03c00732f9ca2b124`
 **Depends on:** Provisional [ADR-001](ADR-001-document-page-worksession.md) and [ADR-002](ADR-002-local-storage-outbox.md)
+**Reviewed HEAD:** `f09ea86d2dd3429421e12d7be854be965166f016`
 
 ## Context and verified current behavior
 
 - `InkSurface` uses `InProgressStrokes` for input and draws completed strokes with an identity transform. No page size, viewport state, zoom/pan transform, or explicit density conversion is modeled.
+- The live review found no `pointerEventToWorldTransform`, `strokeToWorldTransform`, or `strokeToScreenTransform` adapter in the app: `InkSurface` uses an identity renderer matrix and forwards raw pointer coordinates to hit testing.
+- The live eraser hit-test is a 40 × 40 raw square with `AffineTransform.IDENTITY`; the `20f` argument is a raw half-extent, not a validated dp size.
+- `InkBitmapRenderer` creates an empty bitmap and does not provide a document rendering proof.
 - Eraser input uses a fixed `20f` half-extent. `StrokeHitTester` constructs an axis-aligned square around the pointer and tests with `AffineTransform.IDENTITY`; the intended screen-space size and dp equivalence are not specified.
 - `StrokePayloadMapper` forwards float x/y values without coordinate conversion. A mapper test confirms those sample values pass through; this does not establish their unit or physical scale.
 - The domain has one unscoped stroke list and no page dimensions or geometry. There are no transform, eraser-at-zoom, or viewport-invariance tests.
