@@ -3,6 +3,7 @@
 **Status:** Architecture handoff; not production implementation approval
 **S02 source baseline:** `86e5ecdd65bbc127f2da49c03c00732f9ca2b124`
 **Reviewed checkout HEAD at orchestration start:** `35e006a81fb6ffc83f0cf95d5d19a7a94bcca4c0`
+**Live completion review HEAD:** `f09ea86d2dd3429421e12d7be854be965166f016`
 **Scope:** Integrates the seven architecture tracks and gives a dependency-ordered implementation plan. Decisions below retain their individual approval status in each ADR.
 
 ## Source of truth and evidence boundary
@@ -10,6 +11,8 @@
 The S01 specification and S00 audit were read alongside S02 instructions, progress, and ADR-001–004. Tracked Android/backend implementation inspected by the read-only investigations was unchanged from the S02 source baseline through the reviewed HEAD. The checkout already contained the untracked zero-byte `backend/app/services/ink_state`; it was preserved and excluded from this work.
 
 All S02-A through S02-G investigations and C/D reviews were read-only. Source/test claims are linked in the ADRs. Tests were inspected, not rerun for this documentation handoff. No S00 limitation is marked passed: PostgreSQL-backed verification, Android–FastAPI–PostgreSQL E2E, exact eraser event tracing, and physical stylus behavior remain open.
+
+The independent completion reviews confirmed the main gates: ADR-003 needs an exact v2 route/schema, complete-batch manifest, mixed-client rollout, authorization, and migrated PostgreSQL proof; ADR-004 needs a product-approved page profile and instrumented AndroidX Ink transform/serializer/eraser proofs. ADR-005 identified the need to move infrastructure out of composables and key document state to stable IDs. ADR-006 confirmed that save, sync acknowledgment, cancellation uncertainty, and analysis are separate state machines. ADR-007 confirmed that the current UUID is not authorization and that backup/restore, legacy ownership, migration rollback, and corruption recovery are unresolved.
 
 ## Consolidated ADR status
 

@@ -4,6 +4,7 @@
 **Decision track:** S02-C
 **Code baseline:** `86e5ecdd65bbc127f2da49c03c00732f9ca2b124`
 **Depends on:** Provisional [ADR-001](ADR-001-document-page-worksession.md) and [ADR-002](ADR-002-local-storage-outbox.md)
+**Reviewed HEAD:** `f09ea86d2dd3429421e12d7be854be965166f016`
 
 ## Context and verified current behavior
 

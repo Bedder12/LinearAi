@@ -3,7 +3,7 @@
 **Status:** Proposed architecture direction; implementation review required
 **Decision track:** S02-E
 **Code baseline:** `86e5ecdd65bbc127f2da49c03c00732f9ca2b124`
-**Reviewed HEAD:** `35e006a81fb6ffc83f0cf95d5d19a7a94bcca4c0`
+**Reviewed HEAD:** `f09ea86d2dd3429421e12d7be854be965166f016`
 
 ## Context and verified current behavior
 
