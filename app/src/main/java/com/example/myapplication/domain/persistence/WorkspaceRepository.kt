@@ -48,6 +48,8 @@ interface WorkspaceRepository {
 
     suspend fun addStrokes(strokes: Collection<Stroke>): WorkspaceSnapshot
 
+    suspend fun addTrackedStrokes(strokes: Collection<TrackedStroke>): WorkspaceSnapshot
+
     suspend fun removeStrokes(strokes: Collection<TrackedStroke>): WorkspaceSnapshot
 
     suspend fun clear(): WorkspaceSnapshot
@@ -56,3 +58,8 @@ interface WorkspaceRepository {
 
     suspend fun acknowledgeBatches(batches: List<OutboxBatchIdentity>)
 }
+
+open class WorkspaceRepositoryException(
+    message: String,
+    cause: Throwable? = null
+) : IllegalStateException(message, cause)

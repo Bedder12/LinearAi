@@ -8,6 +8,7 @@ import androidx.ink.storage.encode
 import androidx.ink.strokes.Stroke
 import androidx.ink.strokes.StrokeInputBatch
 import com.example.myapplication.domain.TrackedStroke
+import com.example.myapplication.domain.persistence.WorkspaceRepositoryException
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
@@ -151,7 +152,7 @@ internal class LocalInkStrokeCodec {
 sealed class LocalInkStrokeException(
     message: String,
     cause: Throwable? = null
-) : IllegalArgumentException(message, cause)
+) : WorkspaceRepositoryException(message, cause)
 
 class UnsupportedInkBrushFamilyException(familyId: String) :
     LocalInkStrokeException("Unsupported AndroidX Ink brush family: $familyId")

@@ -1,85 +1,117 @@
 package com.example.myapplication
 
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Text
-import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.myapplication.analysis.network.AnalysisNetwork
-import com.example.myapplication.analysis.repository.AnalysisRepository
+import com.example.myapplication.domain.InkDocument
 import com.example.myapplication.ink.InkSurface
 import com.example.myapplication.ink.InkTool
 import com.example.myapplication.ui.workspace.MathWorkspaceViewModel
 import com.example.myapplication.ui.workspace.MathWorkspaceViewModelFactory
-import com.example.myapplication.ui.workspace.SyncState
+import com.example.myapplication.ui.workspace.RemoteSyncState
+import com.example.myapplication.ui.workspace.WorkspaceUiState
 
 @Composable
-fun MathWorkspaceScreen() {
-
-    val viewModel: MathWorkspaceViewModel = viewModel(
-        factory = MathWorkspaceViewModelFactory(
-            analysisRepository = AnalysisRepository(
-                api = AnalysisNetwork.api
-            )
-        )
-    )
-
-    val studentWork = viewModel.studentWork
-    val selectedTool = viewModel.selectedTool
-    val syncState = viewModel.syncState
-    val needsReconciliation = syncState is SyncState.NeedsRecovery ||
-        syncState is SyncState.Conflict || syncState is SyncState.InvalidRequest
-
+fun MathWorkspaceScreen(viewModelFactory: MathWorkspaceViewModelFactory) {
+    val viewModel: MathWorkspaceViewModel = viewModel(factory = viewModelFactory)
+    val workspaceState = viewModel.workspaceState
+    val remoteSyncState = viewModel.remoteSyncState
+    val snapshot = when (workspaceState) {
+        WorkspaceUiState.Loading -> null
+        is WorkspaceUiState.Ready -> workspaceState.snapshot
+        is WorkspaceUiState.Saving -> workspaceState.snapshot
+        is WorkspaceUiState.LocalSaveError -> workspaceState.snapshot
+    }
     var pagesExpanded by rememberSaveable { mutableStateOf(true) }
 
+    if (snapshot == null) {
+        val errorState = workspaceState as? WorkspaceUiState.LocalSaveError
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    if (errorState == null) {
+                        "Loading workspace…"
+                    } else {
+                        "Unable to load the local workspace. Existing data was not replaced."
+                    }
+                )
+                if (errorState != null) {
+                    Button(onClick = viewModel::retryLocalSave) {
+                        Text("Retry loading")
+                    }
+                }
+            }
+        }
+        return
+    }
+
+    val isSaveError = workspaceState is WorkspaceUiState.LocalSaveError
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             WorkspaceToolSelector(
-                selectedTool = selectedTool,
+                selectedTool = viewModel.selectedTool,
                 onToolSelected = viewModel::selectTool
             )
-            Button(onClick = { viewModel.clear() }) { Text("Clear") }
-            Button(
-                enabled = syncState !is SyncState.Syncing && !needsReconciliation,
-                onClick = { viewModel.check() }
-            ) { Text("Check") }
+            Button(enabled = !isSaveError, onClick = viewModel::clear) { Text("Clear") }
+            Button(enabled = false, onClick = {}) { Text("Check unavailable") }
         }
 
-        Text("Revision: ${studentWork.revision}")
+        Text("Revision: ${snapshot.revision}")
         Text(
-            when (val state = syncState) {
-                SyncState.Idle -> "Not synchronized"
-                SyncState.Syncing -> "Saving changes…"
-                SyncState.Synced -> "Changes saved"
-                is SyncState.NeedsRecovery ->
-                    "Sync paused: server revision ${state.acceptedRevision}. Keep your drawing."
-                SyncState.Conflict -> "Sync conflict. Your local changes are preserved."
-                SyncState.InvalidRequest -> "Invalid sync request. Your drawing is preserved."
-                SyncState.TemporaryFailure -> "Connection unavailable. Tap Check to retry."
-                SyncState.UnexpectedFailure -> "Sync failed. Tap Check to retry."
+            when (workspaceState) {
+                WorkspaceUiState.Loading -> "Loading workspace…"
+                is WorkspaceUiState.Ready -> "Saved on this device"
+                is WorkspaceUiState.Saving -> "Saving locally…"
+                is WorkspaceUiState.LocalSaveError ->
+                    "Local save failed. The last committed drawing is shown."
             }
         )
+        Text(remoteSyncMessage(remoteSyncState))
+        if (workspaceState is WorkspaceUiState.LocalSaveError) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(workspaceState.message, modifier = Modifier.weight(1f))
+                Button(onClick = viewModel::retryLocalSave) {
+                    Text(if (workspaceState.snapshot == null) "Retry loading" else "Retry save")
+                }
+            }
+        }
 
         BoxWithConstraints(modifier = Modifier.weight(1f)) {
             val wideLayout = maxWidth >= 720.dp
@@ -91,11 +123,12 @@ fun MathWorkspaceScreen() {
                         modifier = Modifier.width(if (pagesExpanded) 176.dp else 104.dp)
                     )
                     InkSurface(
-                        document = studentWork.document,
-                        selectedTool = selectedTool,
+                        document = InkDocument(snapshot.strokes),
+                        selectedTool = viewModel.selectedTool,
                         onStrokesAdded = viewModel::addStrokes,
                         onStrokesRemoved = viewModel::removeStrokes,
-                        modifier = Modifier.weight(1f),
+                        interactionEnabled = !isSaveError,
+                        modifier = Modifier.weight(1f).testTag("ink-surface"),
                     )
                 }
             } else {
@@ -106,17 +139,29 @@ fun MathWorkspaceScreen() {
                         compact = true,
                     )
                     InkSurface(
-                        document = studentWork.document,
-                        selectedTool = selectedTool,
+                        document = InkDocument(snapshot.strokes),
+                        selectedTool = viewModel.selectedTool,
                         onStrokesAdded = viewModel::addStrokes,
                         onStrokesRemoved = viewModel::removeStrokes,
-                        modifier = Modifier.weight(1f),
+                        interactionEnabled = !isSaveError,
+                        modifier = Modifier.weight(1f).testTag("ink-surface"),
                     )
                 }
             }
         }
     }
 }
+
+private fun remoteSyncMessage(state: RemoteSyncState): String =
+    when (state) {
+        RemoteSyncState.Checking -> "Checking local sync queue…"
+        RemoteSyncState.NoPendingChanges ->
+            "No pending remote changes. Remote synchronization is unavailable."
+        is RemoteSyncState.Pending ->
+            "Pending remote synchronization: ${state.batchCount} batch(es). Events remain on this device."
+        RemoteSyncState.Unavailable ->
+            "Remote sync status is unavailable. No sync was attempted."
+    }
 
 /**
  * Slice 01: stateless tool selector.

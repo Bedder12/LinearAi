@@ -224,11 +224,12 @@ class RoomWorkspaceRepositoryTest {
             """.trimIndent()
         )
 
-        assertThrows(SQLiteException::class.java) {
+        val failure = assertThrows(WorkspacePersistenceException::class.java) {
             runBlocking {
                 repository.addStrokes(listOf(trackedStrokeInput(1f, InputToolType.STYLUS)))
             }
         }
+        assertTrue(failure.cause is SQLiteException)
 
         val snapshot = repository.loadWorkspace()!!
         assertEquals(0L, snapshot.revision)

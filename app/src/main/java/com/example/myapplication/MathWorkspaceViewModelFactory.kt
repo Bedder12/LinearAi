@@ -2,10 +2,10 @@ package com.example.myapplication.ui.workspace
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.myapplication.analysis.repository.AnalysisRepository
+import com.example.myapplication.domain.persistence.WorkspaceRepository
 
 class MathWorkspaceViewModelFactory(
-    private val analysisRepository: AnalysisRepository
+    private val workspaceRepository: WorkspaceRepository
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(
@@ -14,7 +14,7 @@ class MathWorkspaceViewModelFactory(
         if (modelClass.isAssignableFrom(MathWorkspaceViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return MathWorkspaceViewModel(
-                analysisRepository = analysisRepository
+                workspaceRepository = workspaceRepository
             ) as T
         }
 

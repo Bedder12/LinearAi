@@ -1,6 +1,7 @@
 package com.example.myapplication.data.local.room
 
 import androidx.ink.strokes.Stroke
+import android.database.sqlite.SQLiteException
 import androidx.room.withTransaction
 import com.example.myapplication.analysis.transport.InkChangePayload
 import com.example.myapplication.analysis.transport.toPayload
@@ -16,10 +17,12 @@ import com.example.myapplication.domain.persistence.OutboxBatchIdentity
 import com.example.myapplication.domain.persistence.StoredOutboxBatch
 import com.example.myapplication.domain.persistence.StoredOutboxEvent
 import com.example.myapplication.domain.persistence.WorkspaceRepository
+import com.example.myapplication.domain.persistence.WorkspaceRepositoryException
 import com.example.myapplication.domain.persistence.WorkspaceSnapshot
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.util.UUID
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -31,10 +34,10 @@ internal class RoomWorkspaceRepository(
     private val v1Json = Json { classDiscriminator = "type" }
 
     override suspend fun createOrLoadWorkspace(): WorkspaceSnapshot =
-        database.withTransaction {
+        databaseTransaction {
             val existingAnchor = dao.getAnchor()
             if (existingAnchor != null) {
-                return@withTransaction loadSnapshot(existingAnchor.documentId)
+                return@databaseTransaction loadSnapshot(existingAnchor.documentId)
                     ?: throw WorkspacePersistenceException("Workspace anchor has no document")
             }
             if (dao.countDocuments() != 0) {
@@ -74,15 +77,19 @@ internal class RoomWorkspaceRepository(
         }
 
     override suspend fun loadWorkspace(): WorkspaceSnapshot? =
-        database.withTransaction {
+        databaseTransaction {
             dao.getAnchor()?.let { loadSnapshot(it.documentId) }
         }
 
-    override suspend fun addStrokes(strokes: Collection<Stroke>): WorkspaceSnapshot {
-        val trackedStrokes = strokes.map { TrackedStroke(stroke = it) }
-        if (trackedStrokes.isEmpty()) return requireWorkspaceSnapshot()
+    override suspend fun addStrokes(strokes: Collection<Stroke>): WorkspaceSnapshot =
+        addTrackedStrokes(strokes.map { TrackedStroke(stroke = it) })
 
-        val encodedStrokes = trackedStrokes.map { tracked ->
+    override suspend fun addTrackedStrokes(
+        strokes: Collection<TrackedStroke>
+    ): WorkspaceSnapshot {
+        if (strokes.isEmpty()) return requireWorkspaceSnapshot()
+
+        val encodedStrokes = strokes.map { tracked ->
             StoredStroke(
                 trackedStroke = tracked,
                 encoded = strokeCodec.encode(tracked),
@@ -90,7 +97,7 @@ internal class RoomWorkspaceRepository(
             )
         }
 
-        return database.withTransaction {
+        return databaseTransaction {
             val (document, page) = getWorkspaceRows()
             val lastPosition = dao.getLastStrokePosition(page.pageId) ?: -1
             val rows = encodedStrokes.mapIndexed { index, stored ->
@@ -117,12 +124,12 @@ internal class RoomWorkspaceRepository(
 
     override suspend fun removeStrokes(strokes: Collection<TrackedStroke>): WorkspaceSnapshot {
         val requestedIds = strokes.map(TrackedStroke::id).distinct()
-        return database.withTransaction {
+        return databaseTransaction {
             val (document, page) = getWorkspaceRows()
-            if (requestedIds.isEmpty()) return@withTransaction loadSnapshot(document.documentId)!!
+            if (requestedIds.isEmpty()) return@databaseTransaction loadSnapshot(document.documentId)!!
 
             val existingIds = dao.getExistingStrokeIds(page.pageId, requestedIds)
-            if (existingIds.isEmpty()) return@withTransaction loadSnapshot(document.documentId)!!
+            if (existingIds.isEmpty()) return@databaseTransaction loadSnapshot(document.documentId)!!
 
             val events = existingIds.map { strokeId ->
                 prepareEvent(InkChange.StrokeRemoved(strokeId))
@@ -137,7 +144,7 @@ internal class RoomWorkspaceRepository(
     }
 
     override suspend fun clear(): WorkspaceSnapshot =
-        database.withTransaction {
+        databaseTransaction {
             val (document, page) = getWorkspaceRows()
             val nextRevision = document.revision + 1
             advanceRevision(document, nextRevision)
@@ -152,8 +159,8 @@ internal class RoomWorkspaceRepository(
         }
 
     override suspend fun readPendingBatches(): List<StoredOutboxBatch> =
-        database.withTransaction {
-            val anchor = dao.getAnchor() ?: return@withTransaction emptyList()
+        databaseTransaction {
+            val anchor = dao.getAnchor() ?: return@databaseTransaction emptyList()
             val document = dao.getDocument(anchor.documentId)
                 ?: throw WorkspacePersistenceException("Workspace anchor has no document")
             dao.getOutboxBatches(document.workSessionId).map { batch ->
@@ -177,7 +184,7 @@ internal class RoomWorkspaceRepository(
         require(batches.distinct().size == batches.size) {
             "Acknowledgment contains duplicate batch identities"
         }
-        database.withTransaction {
+        databaseTransaction {
             batches.forEach { identity ->
                 val batch = dao.getOutboxBatch(identity.workSessionId, identity.revision)
                     ?: throw InvalidOutboxAcknowledgmentException("Acknowledged batch no longer exists")
@@ -197,6 +204,20 @@ internal class RoomWorkspaceRepository(
 
     private suspend fun requireWorkspaceSnapshot(): WorkspaceSnapshot =
         loadWorkspace() ?: throw WorkspacePersistenceException("Workspace has not been created")
+
+    private suspend fun <T> databaseTransaction(
+        operation: suspend () -> T
+    ): T =
+        try {
+            database.withTransaction { operation() }
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: SQLiteException) {
+            throw WorkspacePersistenceException(
+                "Local workspace database operation failed",
+                exception
+            )
+        }
 
     private suspend fun getWorkspaceRows(): Pair<DocumentEntity, PageEntity> {
         val anchor = dao.getAnchor()
@@ -327,10 +348,13 @@ internal class RoomWorkspaceRepository(
     )
 }
 
-class WorkspacePersistenceException(message: String) : IllegalStateException(message)
+class WorkspacePersistenceException(
+    message: String,
+    cause: Throwable? = null
+) : WorkspaceRepositoryException(message, cause)
 
-class WorkspaceConcurrencyException(message: String) : IllegalStateException(message)
+class WorkspaceConcurrencyException(message: String) : WorkspaceRepositoryException(message)
 
-class OutboxIntegrityException(message: String) : IllegalStateException(message)
+class OutboxIntegrityException(message: String) : WorkspaceRepositoryException(message)
 
 class InvalidOutboxAcknowledgmentException(message: String) : IllegalArgumentException(message)
