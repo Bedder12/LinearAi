@@ -13,4 +13,10 @@
 | S01 — UX specification and wireframes | Complete (design baseline) | [Final UX spec](research/ux-spec.md), [S01 instructions](slices/S01.md), component/navigation hierarchy, phone/tablet screen layouts, resolved interaction decisions, J01–J08 desk-check, accessibility targets, and S02 technical handoff recorded. No production code changed. User testing/runtime validation is not claimed. |
 | S02 — Architecture and API contract decisions | Complete (architecture handoff; implementation gated) | [S02 instructions](slices/S02.md), [seven ADRs](research/architecture/), and [dependency-ordered implementation handoff](research/architecture/S02-implementation-handoff.md). A/B accepted provisionally; C/D reconciled proposals; E/F/G proposed. S03 local-only readiness is conditional on page profile, Ink serialization, and backup gates; cloud sync additionally requires authorization. No production code/API/database/dependency changes. |
 
+### S03 implementation
+
+| Slice | Status | Evidence / blocker |
+|---|---|---|
+| S03-A — Durable local persistence foundation | Implemented and validated on `feat/s03a-local-persistence-foundation`; not integrated into the running workspace | [S03-A handoff](research/architecture/S03-A-local-persistence-foundation.md). Room schema v1, local Ink codec, transactional repository/outbox, and focused tests are in place. Debug build, 29 unit tests, instrumented-test compilation, 26 Pixel API 35 instrumented tests, and lint passed. S03-B must integrate runtime repository ownership and verify process-death/reopen behavior before claiming user-facing durability. |
+
 S00 is intentionally not marked complete. S01 is complete only as a design/planning baseline; it does not resolve S00's technical/E2E blockers or indicate that planned features exist. S02 is complete only as an architecture handoff; proposed/provisional decisions are not implementation or runtime validation. PostgreSQL/E2E, exact eraser tracing, and physical stylus verification remain open.

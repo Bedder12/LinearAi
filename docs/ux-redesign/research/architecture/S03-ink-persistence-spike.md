@@ -1,6 +1,6 @@
 # S03 — AndroidX Ink persistence feasibility spike
 
-**Status:** Test authored, NOT executed. Results pending Android instrumented run.
+**Status:** The representative Android instrumented test has executed successfully on the configured Pixel API 35 managed device. This confirms only the sample tested by the spike; it does not prove production serialization or crash recovery.
 **Branch:** `spike/s03-ink-persistence-roundtrip`
 **Baseline:** `f7067b46075c2934cf9baa5d9f39346f8d15b1b9` (merged S02 PR #17)
 **Scope:** Test-only investigation; no production persistence, ViewModel, backend, database, or UI change.
@@ -33,13 +33,13 @@ The second command is a configured managed-device task in this repository. Its a
 .\gradlew.bat connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.myapplication.ink.InkStorageRoundTripSpikeTest
 ```
 
-Record command, environment, exit code, test XML, and any compiler/runtime exception. A passing Android test indicates the tested sample round-tripped within its chosen tolerances; it is not proof that every future brush/stroke or byte representation is lossless.
+The S03-A validation run used `.\gradlew.bat :app:pixelApi35DebugAndroidTest`. Its XML report recorded `stylusStrokeSurvivesFileRoundTripWithIdentityInputsAndBrush` as passed (1 test, 0 failures, 0 errors, 0 skipped). A passing Android test indicates the tested sample round-tripped within its chosen tolerances; it is not proof that every future brush/stroke or byte representation is lossless.
 
 ## Follow-up validation matrix
 
 | Test | Success criterion | Status |
 |---|---|---|
-| Three-point stylus round-trip | Stable ID, stock brush fields, point count/type/timing and optional attributes within declared tolerances | NOT RUN |
+| Three-point stylus round-trip | Stable ID, stock brush fields, point count/type/timing and optional attributes within declared tolerances | PASS — one instrumented sample; production codec, crash recovery, and other brush families are not covered |
 | Finger input without optional attributes | Existing supported touch mode recreates correctly | NOT ADDED |
 | More realistic pressure/tilt curves | Fidelity and rendering compared on instrumented device | NOT ADDED |
 | Multiple stock brush families/colors | Explicit family registry; no default silent substitution | NOT ADDED |
