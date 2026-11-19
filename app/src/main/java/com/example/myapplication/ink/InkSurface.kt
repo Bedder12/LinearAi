@@ -24,6 +24,7 @@ fun InkSurface(
     selectedTool: InkTool,
     onStrokesAdded: (Collection<Stroke>) -> Unit,
     onStrokesRemoved: (Set<TrackedStroke>) -> Unit,
+    interactionEnabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
 
@@ -42,7 +43,7 @@ fun InkSurface(
     }
 
     Box(
-        modifier = modifier.pointerInput(selectedTool) {
+        modifier = modifier.pointerInput(selectedTool, interactionEnabled) {
 
             awaitPointerEventScope {
 
@@ -52,7 +53,9 @@ fun InkSurface(
                         PointerEventPass.Initial
                     )
 
-                    event.changes.forEach { change ->
+                    if (!interactionEnabled) {
+                        event.changes.forEach { it.consume() }
+                    } else event.changes.forEach { change ->
 
                         val decision =
                             InkInputPolicy.classify(change.type)
@@ -102,7 +105,7 @@ fun InkSurface(
                 }
             }
 
-            if (selectedTool == InkTool.PEN) {
+            if (interactionEnabled && selectedTool == InkTool.PEN) {
 
                 InProgressStrokes(
                     defaultBrush = InkBrushes.defaultPen,
