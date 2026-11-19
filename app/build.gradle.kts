@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.androidx.room)
 }
 
 android {
@@ -43,6 +45,12 @@ android {
                     apiLevel = 35
                     systemImageSource = "aosp"
                 }
+
+                room {
+                    schemaDirectory("$projectDir/schemas")
+                }
+
+                sourceSets.getByName("androidTest").assets.directories.add("$projectDir/schemas")
             }
         }
     }
@@ -51,6 +59,10 @@ android {
 dependencies {
     val inkVersion = "1.0.0"
     testImplementation(libs.kotlinx.coroutines.test)
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.core.ktx)
@@ -73,7 +85,7 @@ dependencies {
     implementation("androidx.ink:ink-geometry:$inkVersion")
     implementation("androidx.ink:ink-rendering:$inkVersion")
     implementation("androidx.ink:ink-strokes:$inkVersion")
-    androidTestImplementation("androidx.ink:ink-storage:$inkVersion")
+    implementation("androidx.ink:ink-storage:$inkVersion")
 
     testImplementation(libs.junit)
 
@@ -81,6 +93,8 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.room.testing)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
 
     debugImplementation(platform(libs.androidx.compose.bom))
     debugImplementation(libs.androidx.compose.ui.tooling)
